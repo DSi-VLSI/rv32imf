@@ -10,7 +10,6 @@ module rv32imf #(
 
 
     input logic [31:0] boot_addr_i,
-    input logic [31:0] mtvec_addr_i,
     input logic [31:0] dm_halt_addr_i,
     input logic [31:0] hart_id_i,
     input logic [31:0] dm_exception_addr_i,
@@ -60,7 +59,7 @@ module rv32imf #(
       .rst_ni(rst_ni),
 
       .boot_addr_i        (boot_addr_i),
-      .mtvec_addr_i       (mtvec_addr_i),
+      .mtvec_addr_i       ('0),
       .dm_halt_addr_i     (dm_halt_addr_i),
       .hart_id_i          (hart_id_i),
       .dm_exception_addr_i(dm_exception_addr_i),

@@ -20,7 +20,6 @@ module rv32imf_tb;
   logic        clk;
   logic        rst_n;
   logic [31:0] boot_addr;
-  logic [31:0] mtvec_addr;
   logic [31:0] dm_halt_addr;
   logic [31:0] hart_id;
   logic [31:0] dm_exception_addr;
@@ -46,7 +45,6 @@ module rv32imf_tb;
       .clk_i              (clk),
       .rst_ni             (rst_n),
       .boot_addr_i        (boot_addr),
-      .mtvec_addr_i       (mtvec_addr),
       .dm_halt_addr_i     (dm_halt_addr),
       .hart_id_i          (hart_id),
       .dm_exception_addr_i(dm_exception_addr),
@@ -119,7 +117,6 @@ module rv32imf_tb;
     #100ns;
     clk               <= '0;
     rst_n             <= '0;
-    mtvec_addr        <= '0;
     dm_halt_addr      <= '0;
     hart_id           <= '0;
     dm_exception_addr <= '0;
@@ -210,6 +207,23 @@ module rv32imf_tb;
     if (data_wdata == 0) $display("\033[1;32m************** TEST PASSED **************\033[0m");
     else $display("\033[1;31m************** TEST FAILED **************\033[0m");
   endtask
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Interrupt Generation
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Always block to trigger every 2us and assert an interrupt
+  always begin
+    #50us;
+    fork
+      begin
+        @(posedge clk);
+        irq <= 'h800; // Assert interrupt
+        @(posedge clk);
+        irq <= 'h0; // Deassert interrupt
+      end
+    join_none
+  end
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Procedural Blocks

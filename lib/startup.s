@@ -12,6 +12,8 @@ putchar_stdout: .dword 0
 .globl _start
 _start:
     call main
+
+_exit:
     la t0, tohost
     sw a0, 0(t0)
 
