@@ -1,9 +1,5 @@
 .include "startup.s"
 
-.align 2
-.globl interrupt_counter
-interrupt_counter: .word 0
-
 .align 7
 # Interrupt handler
 interrupt_handler:
