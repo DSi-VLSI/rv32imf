@@ -1,6 +1,4 @@
-module rv32imf_fp_wrapper
-  import rv32imf_apu_core_pkg::*;
-#(
+module rv32imf_fp_wrapper #(
 ) (
 
     input logic clk_i,
@@ -11,14 +9,14 @@ module rv32imf_fp_wrapper
     output logic apu_gnt_o,
 
 
-    input logic [                 2:0][31:0] apu_operands_i,
-    input logic [     APU_WOP_CPU-1:0]       apu_op_i,
-    input logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_i,
+    input logic [ 2:0][31:0] apu_operands_i,
+    input logic [ 5:0]       apu_op_i,
+    input logic [14:0]       apu_flags_i,
 
 
-    output logic                        apu_rvalid_o,
-    output logic [                31:0] apu_rdata_o,
-    output logic [APU_NUSFLAGS_CPU-1:0] apu_rflags_o
+    output logic        apu_rvalid_o,
+    output logic [31:0] apu_rdata_o,
+    output logic [ 4:0] apu_rflags_o
 );
 
 

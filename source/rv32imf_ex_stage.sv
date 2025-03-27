@@ -1,10 +1,6 @@
 module rv32imf_ex_stage
   import rv32imf_pkg::*;
-  import rv32imf_apu_core_pkg::*;
 #(
-    parameter APU_WOP_CPU      = 6,
-    parameter APU_NDSFLAGS_CPU = 15,
-    parameter APU_NUSFLAGS_CPU = 5
 ) (
     input logic clk,
     input logic rst_n,
@@ -52,15 +48,15 @@ module rv32imf_ex_stage
 
 
     output logic fpu_fflags_we_o,
-    output logic [APU_NUSFLAGS_CPU-1:0] fpu_fflags_o,
+    output logic [4:0] fpu_fflags_o,
 
 
-    input logic                              apu_en_i,
-    input logic [     APU_WOP_CPU-1:0]       apu_op_i,
-    input logic [                 1:0]       apu_lat_i,
-    input logic [   2:0][31:0] apu_operands_i,
-    input logic [                 5:0]       apu_waddr_i,
-    input logic [APU_NUSFLAGS_CPU-1:0]       apu_flags_i,
+    input logic             apu_en_i,
+    input logic [5:0]       apu_op_i,
+    input logic [1:0]       apu_lat_i,
+    input logic [2:0][31:0] apu_operands_i,
+    input logic [5:0]       apu_waddr_i,
+    input logic [4:0]       apu_flags_i,
 
     input  logic [2:0][5:0] apu_read_regs_i,
     input  logic [2:0]      apu_read_regs_valid_i,
@@ -83,7 +79,7 @@ module rv32imf_ex_stage
     input  logic apu_gnt_i,
 
     output logic [2:0][31:0] apu_operands_o,
-    output logic [  APU_WOP_CPU-1:0]       apu_op_o,
+    output logic [5:0]       apu_op_o,
 
     input logic        apu_rvalid_i,
     input logic [31:0] apu_result_i,
@@ -130,34 +126,34 @@ module rv32imf_ex_stage
     input  logic wb_ready_i
 );
 
-  logic [                31:0] alu_result;
-  logic [                31:0] mult_result;
-  logic                        alu_cmp_result;
+  logic [31:0] alu_result;
+  logic [31:0] mult_result;
+  logic        alu_cmp_result;
 
-  logic                        regfile_we_lsu;
-  logic [                 5:0] regfile_waddr_lsu;
+  logic        regfile_we_lsu;
+  logic [ 5:0] regfile_waddr_lsu;
 
-  logic                        wb_contention;
-  logic                        wb_contention_lsu;
+  logic        wb_contention;
+  logic        wb_contention_lsu;
 
-  logic                        alu_ready;
-  logic                        mulh_active;
-  logic                        mult_ready;
+  logic        alu_ready;
+  logic        mulh_active;
+  logic        mult_ready;
 
 
-  logic                        apu_valid;
-  logic [                 5:0] apu_waddr;
-  logic [                31:0] apu_result;
-  logic                        apu_stall;
-  logic                        apu_active;
-  logic                        apu_singlecycle;
-  logic                        apu_multicycle;
-  logic                        apu_req;
-  logic                        apu_gnt;
+  logic        apu_valid;
+  logic [ 5:0] apu_waddr;
+  logic [31:0] apu_result;
+  logic        apu_stall;
+  logic        apu_active;
+  logic        apu_singlecycle;
+  logic        apu_multicycle;
+  logic        apu_req;
+  logic        apu_gnt;
 
-  logic                        apu_rvalid_q;
-  logic [                31:0] apu_result_q;
-  logic [APU_NUSFLAGS_CPU-1:0] apu_flags_q;
+  logic        apu_rvalid_q;
+  logic [31:0] apu_result_q;
+  logic [ 4:0] apu_flags_q;
 
 
   always_comb begin

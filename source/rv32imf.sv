@@ -37,19 +37,16 @@ module rv32imf #(
     output logic [ 4:0] irq_id_o
 );
 
-  import rv32imf_apu_core_pkg::*;
+  logic              apu_busy;
+  logic              apu_req;
+  logic [ 2:0][31:0] apu_operands;
+  logic [ 5:0]       apu_op;
+  logic [14:0]       apu_flags;
 
-
-  logic                              apu_busy;
-  logic                              apu_req;
-  logic [                 2:0][31:0] apu_operands;
-  logic [     APU_WOP_CPU-1:0]       apu_op;
-  logic [APU_NDSFLAGS_CPU-1:0]       apu_flags;
-
-  logic                              apu_gnt;
-  logic                              apu_rvalid;
-  logic [                31:0]       apu_rdata;
-  logic [APU_NUSFLAGS_CPU-1:0]       apu_rflags;
+  logic              apu_gnt;
+  logic              apu_rvalid;
+  logic [31:0]       apu_rdata;
+  logic [ 4:0]       apu_rflags;
 
   logic apu_clk_en, apu_clk;
 

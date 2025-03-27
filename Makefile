@@ -14,7 +14,6 @@ RV64G_GCC := riscv64-unknown-elf-gcc -march=rv32imf -mabi=ilp32 -nostdlib -nosta
 # Add all the RTL source files to the LIB variable
 ################################################################################
 
-LIB += ${ROOT}/source/rv32imf_apu_core_pkg.sv
 LIB += ${ROOT}/source/rv32imf_pkg.sv
 LIB += ${ROOT}/source/rv32imf_fpu_pkg.sv
 LIB += ${ROOT}/source/fpnew_pkg.sv

@@ -1,9 +1,7 @@
 module rv32imf_decoder
   import rv32imf_pkg::*;
-  import rv32imf_apu_core_pkg::*;
   import rv32imf_fpu_pkg::*;
 #(
-    parameter int APU_WOP_CPU      = 6,
     parameter int DEBUG_TRIGGER_EN = 1
 ) (
 
@@ -77,10 +75,10 @@ module rv32imf_decoder
     output logic [rv32imf_fpu_pkg::INT_FORMAT_BITS-1:0] fpu_int_fmt_o,
 
 
-    output logic                   apu_en_o,
-    output logic [APU_WOP_CPU-1:0] apu_op_o,
-    output logic [            1:0] apu_lat_o,
-    output logic [            2:0] fp_rnd_mode_o,
+    output logic       apu_en_o,
+    output logic [5:0] apu_op_o,
+    output logic [1:0] apu_lat_o,
+    output logic [2:0] fp_rnd_mode_o,
 
 
     output logic regfile_mem_we_o,

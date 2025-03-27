@@ -1,12 +1,8 @@
 module rv32imf_id_stage
   import rv32imf_pkg::*;
-  import rv32imf_apu_core_pkg::*;
 #(
     parameter int N_HWLP = 2,
-    parameter int N_HWLP_BITS = $clog2(N_HWLP),
-    parameter int APU_WOP_CPU = 6,
-    parameter int APU_NDSFLAGS_CPU = 15,
-    parameter int APU_NUSFLAGS_CPU = 5
+    parameter int N_HWLP_BITS = $clog2(N_HWLP)
 ) (
     input logic clk,
     input logic clk_ungated_i,
@@ -93,12 +89,12 @@ module rv32imf_id_stage
     output logic        mult_clpx_img_ex_o,
 
 
-    output logic                              apu_en_ex_o,
-    output logic [     APU_WOP_CPU-1:0]       apu_op_ex_o,
-    output logic [                 1:0]       apu_lat_ex_o,
-    output logic [   2:0][31:0] apu_operands_ex_o,
-    output logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_ex_o,
-    output logic [                 5:0]       apu_waddr_ex_o,
+    output logic              apu_en_ex_o,
+    output logic [ 5:0]       apu_op_ex_o,
+    output logic [ 1:0]       apu_lat_ex_o,
+    output logic [ 2:0][31:0] apu_operands_ex_o,
+    output logic [14:0]       apu_flags_ex_o,
+    output logic [ 5:0]       apu_waddr_ex_o,
 
     output logic [2:0][5:0] apu_read_regs_o,
     output logic [2:0]      apu_read_regs_valid_o,
@@ -128,7 +124,7 @@ module rv32imf_id_stage
     output logic              csr_save_cause_o,
 
 
-    output logic [      31:0]       hwlp_target_o,
+    output logic [31:0] hwlp_target_o,
 
 
     output logic       data_req_ex_o,
@@ -293,89 +289,89 @@ module rv32imf_id_stage
   logic [ 5:0] regfile_alu_waddr_id;
   logic regfile_alu_we_id, regfile_alu_we_dec_id;
 
-  logic [31:0] regfile_data_ra_id;
-  logic [31:0] regfile_data_rb_id;
-  logic [31:0] regfile_data_rc_id;
+  logic        [                                31:0]       regfile_data_ra_id;
+  logic        [                                31:0]       regfile_data_rb_id;
+  logic        [                                31:0]       regfile_data_rc_id;
 
 
-  logic alu_en;
-  alu_opcode_e alu_operator;
-  logic [2:0] alu_op_a_mux_sel;
-  logic [2:0] alu_op_b_mux_sel;
-  logic [1:0] alu_op_c_mux_sel;
-  logic [1:0] regc_mux;
+  logic                                                     alu_en;
+  alu_opcode_e                                              alu_operator;
+  logic        [                                 2:0]       alu_op_a_mux_sel;
+  logic        [                                 2:0]       alu_op_b_mux_sel;
+  logic        [                                 1:0]       alu_op_c_mux_sel;
+  logic        [                                 1:0]       regc_mux;
 
-  logic [0:0] imm_a_mux_sel;
-  logic [3:0] imm_b_mux_sel;
-  logic [1:0] ctrl_transfer_target_mux_sel;
-
-
-  mul_opcode_e mult_operator;
-  logic mult_en;
-  logic mult_int_en;
-  logic mult_sel_subword;
-  logic [1:0] mult_signed_mode;
-  logic mult_dot_en;
-  logic [1:0] mult_dot_signed;
+  logic        [                                 0:0]       imm_a_mux_sel;
+  logic        [                                 3:0]       imm_b_mux_sel;
+  logic        [                                 1:0]       ctrl_transfer_target_mux_sel;
 
 
-  logic [rv32imf_fpu_pkg::FP_FORMAT_BITS-1:0] fpu_src_fmt;
-  logic [rv32imf_fpu_pkg::FP_FORMAT_BITS-1:0] fpu_dst_fmt;
-  logic [rv32imf_fpu_pkg::INT_FORMAT_BITS-1:0] fpu_int_fmt;
+  mul_opcode_e                                              mult_operator;
+  logic                                                     mult_en;
+  logic                                                     mult_int_en;
+  logic                                                     mult_sel_subword;
+  logic        [                                 1:0]       mult_signed_mode;
+  logic                                                     mult_dot_en;
+  logic        [                                 1:0]       mult_dot_signed;
 
 
-  logic apu_en;
-  logic [APU_WOP_CPU-1:0] apu_op;
-  logic [1:0] apu_lat;
-  logic [2:0][31:0] apu_operands;
-  logic [APU_NDSFLAGS_CPU-1:0] apu_flags;
-  logic [5:0] apu_waddr;
-
-  logic [2:0][5:0] apu_read_regs;
-  logic [2:0] apu_read_regs_valid;
-  logic [1:0][5:0] apu_write_regs;
-  logic [1:0] apu_write_regs_valid;
-
-  logic apu_stall;
-  logic [2:0] fp_rnd_mode;
+  logic        [ rv32imf_fpu_pkg::FP_FORMAT_BITS-1:0]       fpu_src_fmt;
+  logic        [ rv32imf_fpu_pkg::FP_FORMAT_BITS-1:0]       fpu_dst_fmt;
+  logic        [rv32imf_fpu_pkg::INT_FORMAT_BITS-1:0]       fpu_int_fmt;
 
 
-  logic regfile_we_id;
-  logic regfile_alu_waddr_mux_sel;
+  logic                                                     apu_en;
+  logic        [                                 5:0]       apu_op;
+  logic        [                                 1:0]       apu_lat;
+  logic        [                                 2:0][31:0] apu_operands;
+  logic        [                                14:0]       apu_flags;
+  logic        [                                 5:0]       apu_waddr;
+
+  logic        [                                 2:0][ 5:0] apu_read_regs;
+  logic        [                                 2:0]       apu_read_regs_valid;
+  logic        [                                 1:0][ 5:0] apu_write_regs;
+  logic        [                                 1:0]       apu_write_regs_valid;
+
+  logic                                                     apu_stall;
+  logic        [                                 2:0]       fp_rnd_mode;
 
 
-  logic data_we_id;
-  logic [1:0] data_type_id;
-  logic [1:0] data_sign_ext_id;
-  logic [1:0] data_reg_offset_id;
-  logic data_req_id;
-  logic data_load_event_id;
+  logic                                                     regfile_we_id;
+  logic                                                     regfile_alu_waddr_mux_sel;
 
 
-  logic [5:0] atop_id;
+  logic                                                     data_we_id;
+  logic        [                                 1:0]       data_type_id;
+  logic        [                                 1:0]       data_sign_ext_id;
+  logic        [                                 1:0]       data_reg_offset_id;
+  logic                                                     data_req_id;
+  logic                                                     data_load_event_id;
 
 
-  logic [2:0] hwlp_we;
-  logic        [       1:0] hwlp_target_mux_sel;
-  logic        [       1:0] hwlp_start_mux_sel;
-  logic                     hwlp_cnt_mux_sel;
-
-  logic        [N_HWLP-1:0] hwlp_dec_cnt;
+  logic        [                                 5:0]       atop_id;
 
 
-  logic                     csr_access;
-  csr_opcode_e              csr_op;
-  logic                     csr_status;
+  logic        [                                 2:0]       hwlp_we;
+  logic        [                                 1:0]       hwlp_target_mux_sel;
+  logic        [                                 1:0]       hwlp_start_mux_sel;
+  logic                                                     hwlp_cnt_mux_sel;
 
-  logic                     prepost_useincr;
+  logic        [                          N_HWLP-1:0]       hwlp_dec_cnt;
 
 
-  logic        [       1:0] operand_a_fw_mux_sel;
-  logic        [       1:0] operand_b_fw_mux_sel;
-  logic        [       1:0] operand_c_fw_mux_sel;
-  logic        [      31:0] operand_a_fw_id;
-  logic        [      31:0] operand_b_fw_id;
-  logic        [      31:0] operand_c_fw_id;
+  logic                                                     csr_access;
+  csr_opcode_e                                              csr_op;
+  logic                                                     csr_status;
+
+  logic                                                     prepost_useincr;
+
+
+  logic        [                                 1:0]       operand_a_fw_mux_sel;
+  logic        [                                 1:0]       operand_b_fw_mux_sel;
+  logic        [                                 1:0]       operand_c_fw_mux_sel;
+  logic        [                                31:0]       operand_a_fw_id;
+  logic        [                                31:0]       operand_b_fw_id;
+  logic        [                                31:0]       operand_c_fw_id;
 
   logic [31:0] operand_b, operand_b_vec;
   logic [31:0] operand_c, operand_c_vec;
@@ -880,9 +876,7 @@ module rv32imf_id_stage
 
 
 
-  rv32imf_decoder #(
-      .APU_WOP_CPU(APU_WOP_CPU)
-  ) decoder_i (
+  rv32imf_decoder #() decoder_i (
 
       .deassert_we_i(deassert_we),
 

@@ -1,6 +1,4 @@
-module rv32imf_core
-  import rv32imf_apu_core_pkg::*;
-#(
+module rv32imf_core #(
 ) (
 
     input logic clk_i,
@@ -35,13 +33,13 @@ module rv32imf_core
     output logic apu_req_o,
     input  logic apu_gnt_i,
 
-    output logic [   2:0][31:0] apu_operands_o,
-    output logic [     APU_WOP_CPU-1:0]       apu_op_o,
-    output logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_o,
+    output logic [ 2:0][31:0] apu_operands_o,
+    output logic [ 5:0]       apu_op_o,
+    output logic [14:0]       apu_flags_o,
 
-    input logic                        apu_rvalid_i,
-    input logic [                31:0] apu_result_i,
-    input logic [APU_NUSFLAGS_CPU-1:0] apu_flags_i,
+    input logic        apu_rvalid_i,
+    input logic [31:0] apu_result_i,
+    input logic [ 4:0] apu_flags_i,
 
 
     input  logic [31:0] irq_i,
@@ -112,72 +110,72 @@ module rv32imf_core
   logic        [ 1:0] imm_vec_ext_ex;
   logic        [ 1:0] alu_vec_mode_ex;
   logic alu_is_clpx_ex, alu_is_subrot_ex;
-  logic        [                 1:0]       alu_clpx_shift_ex;
+  logic        [        1:0]       alu_clpx_shift_ex;
 
 
-  mul_opcode_e                              mult_operator_ex;
-  logic        [                31:0]       mult_operand_a_ex;
-  logic        [                31:0]       mult_operand_b_ex;
-  logic        [                31:0]       mult_operand_c_ex;
-  logic                                     mult_en_ex;
-  logic                                     mult_sel_subword_ex;
-  logic        [                 1:0]       mult_signed_mode_ex;
-  logic        [                 4:0]       mult_imm_ex;
-  logic        [                31:0]       mult_dot_op_a_ex;
-  logic        [                31:0]       mult_dot_op_b_ex;
-  logic        [                31:0]       mult_dot_op_c_ex;
-  logic        [                 1:0]       mult_dot_signed_ex;
-  logic                                     mult_is_clpx_ex;
-  logic        [                 1:0]       mult_clpx_shift_ex;
-  logic                                     mult_clpx_img_ex;
+  mul_opcode_e                     mult_operator_ex;
+  logic        [       31:0]       mult_operand_a_ex;
+  logic        [       31:0]       mult_operand_b_ex;
+  logic        [       31:0]       mult_operand_c_ex;
+  logic                            mult_en_ex;
+  logic                            mult_sel_subword_ex;
+  logic        [        1:0]       mult_signed_mode_ex;
+  logic        [        4:0]       mult_imm_ex;
+  logic        [       31:0]       mult_dot_op_a_ex;
+  logic        [       31:0]       mult_dot_op_b_ex;
+  logic        [       31:0]       mult_dot_op_c_ex;
+  logic        [        1:0]       mult_dot_signed_ex;
+  logic                            mult_is_clpx_ex;
+  logic        [        1:0]       mult_clpx_shift_ex;
+  logic                            mult_clpx_img_ex;
 
 
-  logic                                     fs_off;
-  logic        [            C_RM-1:0]       frm_csr;
-  logic        [         C_FFLAG-1:0]       fflags_csr;
-  logic                                     fflags_we;
-  logic                                     fregs_we;
+  logic                            fs_off;
+  logic        [   C_RM-1:0]       frm_csr;
+  logic        [C_FFLAG-1:0]       fflags_csr;
+  logic                            fflags_we;
+  logic                            fregs_we;
 
 
-  logic                                     apu_en_ex;
-  logic        [APU_NDSFLAGS_CPU-1:0]       apu_flags_ex;
-  logic        [     APU_WOP_CPU-1:0]       apu_op_ex;
-  logic        [                 1:0]       apu_lat_ex;
-  logic        [   2:0][31:0] apu_operands_ex;
-  logic        [                 5:0]       apu_waddr_ex;
+  logic                            apu_en_ex;
+  logic        [       14:0]       apu_flags_ex;
+  logic        [        5:0]       apu_op_ex;
+  logic        [        1:0]       apu_lat_ex;
+  logic        [        2:0][31:0] apu_operands_ex;
+  logic        [        5:0]       apu_waddr_ex;
 
-  logic        [                 2:0][ 5:0] apu_read_regs;
-  logic        [                 2:0]       apu_read_regs_valid;
-  logic                                     apu_read_dep;
-  logic                                     apu_read_dep_for_jalr;
-  logic        [                 1:0][ 5:0] apu_write_regs;
-  logic        [                 1:0]       apu_write_regs_valid;
-  logic                                     apu_write_dep;
+  logic        [        2:0][ 5:0] apu_read_regs;
+  logic        [        2:0]       apu_read_regs_valid;
+  logic                            apu_read_dep;
+  logic                            apu_read_dep_for_jalr;
+  logic        [        1:0][ 5:0] apu_write_regs;
+  logic        [        1:0]       apu_write_regs_valid;
+  logic                            apu_write_dep;
 
-  logic                                     perf_apu_type;
-  logic                                     perf_apu_cont;
-  logic                                     perf_apu_dep;
-  logic                                     perf_apu_wb;
-
-
-  logic        [                 5:0]       regfile_waddr_ex;
-  logic                                     regfile_we_ex;
-  logic        [                 5:0]       regfile_waddr_fw_wb_o;
-  logic                                     regfile_we_wb;
-  logic                                     regfile_we_wb_power;
-  logic        [                31:0]       regfile_wdata;
-
-  logic        [                 5:0]       regfile_alu_waddr_ex;
-  logic                                     regfile_alu_we_ex;
-
-  logic        [                 5:0]       regfile_alu_waddr_fw;
-  logic                                     regfile_alu_we_fw;
-  logic                                     regfile_alu_we_fw_power;
-  logic        [                31:0]       regfile_alu_wdata_fw;
+  logic                            perf_apu_type;
+  logic                            perf_apu_cont;
+  logic                            perf_apu_dep;
+  logic                            perf_apu_wb;
 
 
-  logic                                     csr_access_ex;
-  csr_opcode_e                              csr_op_ex;
+  logic        [        5:0]       regfile_waddr_ex;
+  logic                            regfile_we_ex;
+  logic        [        5:0]       regfile_waddr_fw_wb_o;
+  logic                            regfile_we_wb;
+  logic                            regfile_we_wb_power;
+  logic        [       31:0]       regfile_wdata;
+
+  logic        [        5:0]       regfile_alu_waddr_ex;
+  logic                            regfile_alu_we_ex;
+
+  logic        [        5:0]       regfile_alu_waddr_fw;
+  logic                            regfile_alu_we_fw;
+  logic                            regfile_alu_we_fw_power;
+  logic        [       31:0]       regfile_alu_wdata_fw;
+
+
+  logic                            csr_access_ex;
+  csr_opcode_e                     csr_op_ex;
   logic [23:0] mtvec, utvec;
   logic        [ 1:0] mtvec_mode;
   logic        [ 1:0] utvec_mode;
@@ -427,10 +425,7 @@ module rv32imf_core
 
 
   rv32imf_id_stage #(
-      .N_HWLP          (N_HWLP),
-      .APU_WOP_CPU     (APU_WOP_CPU),
-      .APU_NDSFLAGS_CPU(APU_NDSFLAGS_CPU),
-      .APU_NUSFLAGS_CPU(APU_NUSFLAGS_CPU)
+      .N_HWLP(N_HWLP)
   ) id_stage_i (
       .clk          (clk),
       .clk_ungated_i(clk_i),
@@ -634,11 +629,7 @@ module rv32imf_core
 
 
 
-  rv32imf_ex_stage #(
-      .APU_WOP_CPU     (APU_WOP_CPU),
-      .APU_NDSFLAGS_CPU(APU_NDSFLAGS_CPU),
-      .APU_NUSFLAGS_CPU(APU_NUSFLAGS_CPU)
-  ) ex_stage_i (
+  rv32imf_ex_stage #() ex_stage_i (
 
       .clk  (clk),
       .rst_n(rst_ni),
