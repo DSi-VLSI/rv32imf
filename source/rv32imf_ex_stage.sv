@@ -2,7 +2,6 @@ module rv32imf_ex_stage
   import rv32imf_pkg::*;
   import rv32imf_apu_core_pkg::*;
 #(
-    parameter APU_NARGS_CPU    = 3,
     parameter APU_WOP_CPU      = 6,
     parameter APU_NDSFLAGS_CPU = 15,
     parameter APU_NUSFLAGS_CPU = 5
@@ -59,7 +58,7 @@ module rv32imf_ex_stage
     input logic                              apu_en_i,
     input logic [     APU_WOP_CPU-1:0]       apu_op_i,
     input logic [                 1:0]       apu_lat_i,
-    input logic [   APU_NARGS_CPU-1:0][31:0] apu_operands_i,
+    input logic [   2:0][31:0] apu_operands_i,
     input logic [                 5:0]       apu_waddr_i,
     input logic [APU_NUSFLAGS_CPU-1:0]       apu_flags_i,
 
@@ -83,7 +82,7 @@ module rv32imf_ex_stage
     output logic apu_req_o,
     input  logic apu_gnt_i,
 
-    output logic [APU_NARGS_CPU-1:0][31:0] apu_operands_o,
+    output logic [2:0][31:0] apu_operands_o,
     output logic [  APU_WOP_CPU-1:0]       apu_op_o,
 
     input logic        apu_rvalid_i,

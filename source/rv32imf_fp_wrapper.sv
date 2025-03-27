@@ -11,7 +11,7 @@ module rv32imf_fp_wrapper
     output logic apu_gnt_o,
 
 
-    input logic [   APU_NARGS_CPU-1:0][31:0] apu_operands_i,
+    input logic [                 2:0][31:0] apu_operands_i,
     input logic [     APU_WOP_CPU-1:0]       apu_op_i,
     input logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_i,
 

@@ -622,7 +622,7 @@ module rv32imf_cs_registers
     if (rst_n == 1'b0) begin
       frm_q <= '0;
       fflags_q <= '0;
-      mstatus_fs_q <= FS_CLEAN;  // TODO FIX
+      mstatus_fs_q <= FS_CLEAN;
       mstatus_q <= '{
           uie: 1'b0,
           mie: 1'b0,

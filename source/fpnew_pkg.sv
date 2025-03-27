@@ -1,16 +1,16 @@
 package fpnew_pkg;
 
-  // Floating-point encoding structure
+
   typedef struct packed {
     int unsigned exp_bits;
     int unsigned man_bits;
   } fp_encoding_t;
 
-  // Local parameters for floating-point formats
+
   parameter int unsigned NUM_FP_FORMATS = 5;
   parameter int unsigned FP_FORMAT_BITS = $clog2(NUM_FP_FORMATS);
 
-  // Enumeration for floating-point formats
+
   typedef enum logic [FP_FORMAT_BITS-1:0] {
     FP32    = 'd0,
     FP64    = 'd1,
@@ -19,16 +19,16 @@ package fpnew_pkg;
     FP16ALT = 'd4
   } fp_format_e;
 
-  // Type definitions for format logic and unsigned values
+
   typedef logic [0:NUM_FP_FORMATS-1] fmt_logic_t;
   typedef logic [0:NUM_FP_FORMATS-1][31:0] fmt_unsigned_t;
 
-  // Local parameters for packed formats
+
   parameter fmt_logic_t CPK_FORMATS = 5'b11000;
   parameter int unsigned NUM_INT_FORMATS = 4;
   parameter int unsigned INT_FORMAT_BITS = $clog2(NUM_INT_FORMATS);
 
-  // Enumeration for integer formats
+
   typedef enum logic [INT_FORMAT_BITS-1:0] {
     INT8,
     INT16,
@@ -36,7 +36,7 @@ package fpnew_pkg;
     INT64
   } int_format_e;
 
-  // Function to get integer width based on format
+
   function automatic int unsigned int_width(int_format_e ifmt);
     unique case (ifmt)
       INT8:  return 8;
@@ -50,13 +50,13 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Type definition for integer format logic
+
   typedef logic [0:NUM_INT_FORMATS-1] ifmt_logic_t;
 
-  // Local parameters for operation groups
+
   parameter int unsigned NUM_OPGROUPS = 4;
 
-  // Enumeration for operation groups
+
   typedef enum logic [1:0] {
     ADDMUL,
     DIVSQRT,
@@ -64,10 +64,10 @@ package fpnew_pkg;
     CONV
   } opgroup_e;
 
-  // Local parameters for operations
+
   parameter int unsigned OP_BITS = 4;
 
-  // Enumeration for operations
+
   typedef enum logic [OP_BITS-1:0] {
     FMADD,
     FNMSUB,
@@ -86,7 +86,7 @@ package fpnew_pkg;
     CPKCD
   } operation_e;
 
-  // Enumeration for rounding modes
+
   typedef enum logic [2:0] {
     RNE = 3'b000,
     RTZ = 3'b001,
@@ -97,7 +97,7 @@ package fpnew_pkg;
     DYN = 3'b111
   } roundmode_e;
 
-  // Structure for status flags
+
   typedef struct packed {
     logic NV;
     logic DZ;
@@ -106,7 +106,7 @@ package fpnew_pkg;
     logic NX;
   } status_t;
 
-  // Structure for floating-point information
+
   typedef struct packed {
     logic is_normal;
     logic is_subnormal;
@@ -118,7 +118,7 @@ package fpnew_pkg;
     logic is_boxed;
   } fp_info_t;
 
-  // Enumeration for class masks
+
   typedef enum logic [9:0] {
     NEGINF     = 10'b00_0000_0001,
     NEGNORM    = 10'b00_0000_0010,
@@ -132,7 +132,7 @@ package fpnew_pkg;
     QNAN       = 10'b10_0000_0000
   } classmask_e;
 
-  // Enumeration for pipeline configuration
+
   typedef enum logic [1:0] {
     BEFORE,
     AFTER,
@@ -140,19 +140,19 @@ package fpnew_pkg;
     DISTRIBUTED
   } pipe_config_t;
 
-  // Enumeration for unit types
+
   typedef enum logic [1:0] {
     DISABLED,
     PARALLEL,
     MERGED
   } unit_type_t;
 
-  // Type definitions for unit types and unsigned values
+
   typedef unit_type_t [0:NUM_FP_FORMATS-1] fmt_unit_types_t;
   typedef fmt_unit_types_t [0:NUM_OPGROUPS-1] opgrp_fmt_unit_types_t;
   typedef fmt_unsigned_t [0:NUM_OPGROUPS-1] opgrp_fmt_unsigned_t;
 
-  // Structure for FPU features
+
   typedef struct packed {
     int unsigned Width;
     logic        EnableVectors;
@@ -161,7 +161,7 @@ package fpnew_pkg;
     ifmt_logic_t IntFmtMask;
   } fpu_features_t;
 
-  // Local parameters for different FPU configurations
+
   parameter fpu_features_t RV64D = '{
       Width: 64,
       EnableVectors: 1'b0,
@@ -210,14 +210,14 @@ package fpnew_pkg;
       IntFmtMask: 4'b0110
   };
 
-  // Structure for FPU implementation
+
   typedef struct packed {
     opgrp_fmt_unsigned_t   PipeRegs;
     opgrp_fmt_unit_types_t UnitTypes;
     pipe_config_t          PipeConfig;
   } fpu_implementation_t;
 
-  // Local parameters for different FPU implementations
+
   parameter fpu_implementation_t DEFAULT_NOREGS = '{
       PipeRegs: '{default: 0},
       UnitTypes: '{
@@ -240,20 +240,20 @@ package fpnew_pkg;
       PipeConfig: BEFORE
   };
 
-  // Local parameter for don't care logic
+
   parameter logic DONT_CARE = 1'b1;
 
-  // Function to get the minimum of two integers
+
   function automatic int minimum(int a, int b);
     return (a < b) ? a : b;
   endfunction
 
-  // Function to get the maximum of two integers
+
   function automatic int maximum(int a, int b);
     return (a > b) ? a : b;
   endfunction
 
-  // Function to get the width of a floating-point format
+
   function automatic int unsigned fp_width(fp_format_e fmt);
     case (fmt)
       FP32:    return 32;
@@ -264,7 +264,7 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Function to get the maximum width of floating-point formats
+
   function automatic int unsigned max_fp_width(fmt_logic_t cfg);
     automatic int unsigned res = 0;
     for (int unsigned i = 0; i < NUM_FP_FORMATS; i++)
@@ -272,7 +272,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the minimum width of floating-point formats
+
   function automatic int unsigned min_fp_width(fmt_logic_t cfg);
     automatic int unsigned res = max_fp_width(cfg);
     for (int unsigned i = 0; i < NUM_FP_FORMATS; i++)
@@ -280,7 +280,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the exponent bits of a floating-point format
+
   function automatic int unsigned exp_bits(fp_format_e fmt);
     case (fmt)
       FP32:    return 8;
@@ -291,7 +291,7 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Function to get the mantissa bits of a floating-point format
+
   function automatic int unsigned man_bits(fp_format_e fmt);
     case (fmt)
       FP32:    return 23;
@@ -302,7 +302,7 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Function to get the bias of a floating-point format
+
   function automatic int unsigned bias(fp_format_e fmt);
     case (fmt)
       FP32:    return 127;
@@ -313,7 +313,7 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Function to get the super format of floating-point formats
+
   function automatic fp_encoding_t super_format(fmt_logic_t cfg);
     automatic fp_encoding_t res;
     res = '0;
@@ -325,7 +325,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the maximum integer width
+
   function automatic int unsigned max_int_width(ifmt_logic_t cfg);
     automatic int unsigned res = 0;
     for (int ifmt = 0; ifmt < NUM_INT_FORMATS; ifmt++) begin
@@ -334,7 +334,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the operation group of an operation
+
   function automatic opgroup_e get_opgroup(operation_e op);
     unique case (op)
       FMADD, FNMSUB, ADD, MUL:     return ADDMUL;
@@ -345,7 +345,7 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Function to get the number of operands for an operation group
+
   function automatic int unsigned num_operands(opgroup_e grp);
     unique case (grp)
       ADDMUL:  return 3;
@@ -356,17 +356,17 @@ package fpnew_pkg;
     endcase
   endfunction
 
-  // Function to get the number of lanes for a format
+
   function automatic int unsigned num_lanes(int unsigned width, fp_format_e fmt, logic vec);
     return vec ? width / fp_width(fmt) : 1;
   endfunction
 
-  // Function to get the maximum number of lanes for formats
+
   function automatic int unsigned max_num_lanes(int unsigned width, fmt_logic_t cfg, logic vec);
     return vec ? width / min_fp_width(cfg) : 1;
   endfunction
 
-  // Function to get the lane formats for a given lane number
+
   function automatic fmt_logic_t get_lane_formats(int unsigned width, fmt_logic_t cfg,
                                                   int unsigned lane_no);
     automatic fmt_logic_t res;
@@ -375,7 +375,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the lane integer formats for a given lane number
+
   function automatic ifmt_logic_t get_lane_int_formats(int unsigned width, fmt_logic_t cfg,
                                                        ifmt_logic_t icfg, int unsigned lane_no);
     automatic ifmt_logic_t res;
@@ -389,7 +389,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the conversion lane formats for a given lane number
+
   function automatic fmt_logic_t get_conv_lane_formats(int unsigned width, fmt_logic_t cfg,
                                                        int unsigned lane_no);
     automatic fmt_logic_t res;
@@ -399,7 +399,7 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to get the conversion lane integer formats for a given lane number
+
   function automatic ifmt_logic_t get_conv_lane_int_formats(
       int unsigned width, fmt_logic_t cfg, ifmt_logic_t icfg, int unsigned lane_no);
     automatic ifmt_logic_t res;
@@ -416,13 +416,13 @@ package fpnew_pkg;
     return res;
   endfunction
 
-  // Function to check if any multi-format is enabled
+
   function automatic logic any_enabled_multi(fmt_unit_types_t types, fmt_logic_t cfg);
     for (int unsigned i = 0; i < NUM_FP_FORMATS; i++) if (cfg[i] && types[i] == MERGED) return 1'b1;
     return 1'b0;
   endfunction
 
-  // Function to check if the first enabled multi-format is the given format
+
   function automatic logic is_first_enabled_multi(fp_format_e fmt, fmt_unit_types_t types,
                                                   fmt_logic_t cfg);
     for (int unsigned i = 0; i < NUM_FP_FORMATS; i++) begin
@@ -431,14 +431,14 @@ package fpnew_pkg;
     return 1'b0;
   endfunction
 
-  // Function to get the first enabled multi-format
+
   function automatic fp_format_e get_first_enabled_multi(fmt_unit_types_t types, fmt_logic_t cfg);
     for (int unsigned i = 0; i < NUM_FP_FORMATS; i++)
     if (cfg[i] && types[i] == MERGED) return fp_format_e'(i);
     return fp_format_e'(0);
   endfunction
 
-  // Function to get the number of registers for multi-formats
+
   function automatic int unsigned get_num_regs_multi(fmt_unsigned_t regs, fmt_unit_types_t types,
                                                      fmt_logic_t cfg);
     automatic int unsigned res = 0;

@@ -42,7 +42,7 @@ module rv32imf #(
 
   logic                              apu_busy;
   logic                              apu_req;
-  logic [   APU_NARGS_CPU-1:0][31:0] apu_operands;
+  logic [                 2:0][31:0] apu_operands;
   logic [     APU_WOP_CPU-1:0]       apu_op;
   logic [APU_NDSFLAGS_CPU-1:0]       apu_flags;
 

@@ -4,7 +4,6 @@ module rv32imf_id_stage
 #(
     parameter int N_HWLP = 2,
     parameter int N_HWLP_BITS = $clog2(N_HWLP),
-    parameter int APU_NARGS_CPU = 3,
     parameter int APU_WOP_CPU = 6,
     parameter int APU_NDSFLAGS_CPU = 15,
     parameter int APU_NUSFLAGS_CPU = 5
@@ -97,7 +96,7 @@ module rv32imf_id_stage
     output logic                              apu_en_ex_o,
     output logic [     APU_WOP_CPU-1:0]       apu_op_ex_o,
     output logic [                 1:0]       apu_lat_ex_o,
-    output logic [   APU_NARGS_CPU-1:0][31:0] apu_operands_ex_o,
+    output logic [   2:0][31:0] apu_operands_ex_o,
     output logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_ex_o,
     output logic [                 5:0]       apu_waddr_ex_o,
 
@@ -328,7 +327,7 @@ module rv32imf_id_stage
   logic apu_en;
   logic [APU_WOP_CPU-1:0] apu_op;
   logic [1:0] apu_lat;
-  logic [APU_NARGS_CPU-1:0][31:0] apu_operands;
+  logic [2:0][31:0] apu_operands;
   logic [APU_NDSFLAGS_CPU-1:0] apu_flags;
   logic [5:0] apu_waddr;
 
@@ -725,14 +724,9 @@ module rv32imf_id_stage
     endcase
   end
 
-
-
-
-
-
-  if (APU_NARGS_CPU >= 1) assign apu_operands[0] = alu_operand_a;
-  if (APU_NARGS_CPU >= 2) assign apu_operands[1] = alu_operand_b;
-  if (APU_NARGS_CPU >= 3) assign apu_operands[2] = alu_operand_c;
+  assign apu_operands[0] = alu_operand_a;
+  assign apu_operands[1] = alu_operand_b;
+  assign apu_operands[2] = alu_operand_c;
 
 
   assign apu_waddr = regfile_alu_waddr_id;

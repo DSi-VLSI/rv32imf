@@ -35,7 +35,7 @@ module rv32imf_core
     output logic apu_req_o,
     input  logic apu_gnt_i,
 
-    output logic [   APU_NARGS_CPU-1:0][31:0] apu_operands_o,
+    output logic [   2:0][31:0] apu_operands_o,
     output logic [     APU_WOP_CPU-1:0]       apu_op_o,
     output logic [APU_NDSFLAGS_CPU-1:0]       apu_flags_o,
 
@@ -143,7 +143,7 @@ module rv32imf_core
   logic        [APU_NDSFLAGS_CPU-1:0]       apu_flags_ex;
   logic        [     APU_WOP_CPU-1:0]       apu_op_ex;
   logic        [                 1:0]       apu_lat_ex;
-  logic        [   APU_NARGS_CPU-1:0][31:0] apu_operands_ex;
+  logic        [   2:0][31:0] apu_operands_ex;
   logic        [                 5:0]       apu_waddr_ex;
 
   logic        [                 2:0][ 5:0] apu_read_regs;
@@ -428,7 +428,6 @@ module rv32imf_core
 
   rv32imf_id_stage #(
       .N_HWLP          (N_HWLP),
-      .APU_NARGS_CPU   (APU_NARGS_CPU),
       .APU_WOP_CPU     (APU_WOP_CPU),
       .APU_NDSFLAGS_CPU(APU_NDSFLAGS_CPU),
       .APU_NUSFLAGS_CPU(APU_NUSFLAGS_CPU)
@@ -636,7 +635,6 @@ module rv32imf_core
 
 
   rv32imf_ex_stage #(
-      .APU_NARGS_CPU   (APU_NARGS_CPU),
       .APU_WOP_CPU     (APU_WOP_CPU),
       .APU_NDSFLAGS_CPU(APU_NDSFLAGS_CPU),
       .APU_NUSFLAGS_CPU(APU_NUSFLAGS_CPU)
