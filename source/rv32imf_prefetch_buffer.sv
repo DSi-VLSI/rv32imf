@@ -49,7 +49,7 @@ module rv32imf_prefetch_buffer #(
 
 
   rv32imf_prefetch_controller #(
-      .DEPTH   (FifoDepth)
+      .DEPTH(FifoDepth)
   ) prefetch_controller_i (
       .clk  (clk),
       .rst_n(rst_n),

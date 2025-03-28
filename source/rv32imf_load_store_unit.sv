@@ -24,7 +24,6 @@ module rv32imf_load_store_unit #(
     input logic [ 1:0] data_type_ex_i,
     input logic [31:0] data_wdata_ex_i,
     input logic [ 1:0] data_reg_offset_ex_i,
-    input logic        data_load_event_ex_i,
     input logic [ 1:0] data_sign_ext_ex_i,
 
     output logic [31:0] data_rdata_ex_o,
@@ -38,10 +37,6 @@ module rv32imf_load_store_unit #(
 
     input  logic [5:0] data_atop_ex_i,
     output logic [5:0] data_atop_o,
-
-
-    output logic p_elw_start_o,
-    output logic p_elw_finish_o,
 
 
     output logic lsu_ready_ex_o,
@@ -79,7 +74,6 @@ module rv32imf_load_store_unit #(
   logic [ 1:0] rdata_offset_q;
   logic [ 1:0] data_sign_ext_q;
   logic        data_we_q;
-  logic        data_load_event_q;
 
   logic [ 1:0] wdata_offset;
 
@@ -154,19 +148,13 @@ module rv32imf_load_store_unit #(
       rdata_offset_q    <= '0;
       data_sign_ext_q   <= '0;
       data_we_q         <= 1'b0;
-      data_load_event_q <= 1'b0;
     end else if (ctrl_update) begin
       data_type_q       <= data_type_ex_i;
       rdata_offset_q    <= data_addr_int[1:0];
       data_sign_ext_q   <= data_sign_ext_ex_i;
       data_we_q         <= data_we_ex_i;
-      data_load_event_q <= data_load_event_ex_i;
     end
   end
-
-
-  assign p_elw_start_o  = data_load_event_ex_i && data_req_o;
-  assign p_elw_finish_o = data_load_event_q && data_rvalid_i && !data_misaligned_ex_i;
 
 
   logic [31:0] data_rdata_ext;

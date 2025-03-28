@@ -194,11 +194,7 @@ module rv32imf_core #(
   logic        [ 1:0] data_sign_ext_ex;
   logic        [ 1:0] data_reg_offset_ex;
   logic               data_req_ex;
-  logic               data_load_event_ex;
   logic               data_misaligned_ex;
-
-  logic               p_elw_start;
-  logic               p_elw_finish;
 
   logic        [31:0] lsu_rdata;
 
@@ -312,9 +308,9 @@ module rv32imf_core #(
 
   rv32imf_sleep_unit #() sleep_unit_i (
 
-      .clk_ungated_i(clk_i),
-      .rst_n        (rst_ni),
-      .clk_gated_o  (clk),
+      .clk_i      (clk_i),
+      .rst_n      (rst_ni),
+      .clk_gated_o(clk),
 
 
       .fetch_enable_o(fetch_enable),
@@ -324,11 +320,6 @@ module rv32imf_core #(
       .ctrl_busy_i(ctrl_busy),
       .lsu_busy_i (lsu_busy),
       .apu_busy_i (apu_busy_o),
-
-
-      .p_elw_start_i (p_elw_start),
-      .p_elw_finish_i(p_elw_finish),
-
 
       .wake_from_sleep_i(wake_from_sleep)
   );
@@ -557,7 +548,6 @@ module rv32imf_core #(
       .data_type_ex_o      (data_type_ex),
       .data_sign_ext_ex_o  (data_sign_ext_ex),
       .data_reg_offset_ex_o(data_reg_offset_ex),
-      .data_load_event_ex_o(data_load_event_ex),
 
       .data_misaligned_ex_o(data_misaligned_ex),
 
@@ -786,7 +776,6 @@ module rv32imf_core #(
       .data_type_ex_i      (data_type_ex),
       .data_wdata_ex_i     (alu_operand_c_ex),
       .data_reg_offset_ex_i(data_reg_offset_ex),
-      .data_load_event_ex_i(data_load_event_ex),
       .data_sign_ext_ex_i  (data_sign_ext_ex),
 
       .data_rdata_ex_o  (lsu_rdata),
@@ -797,10 +786,6 @@ module rv32imf_core #(
 
       .data_misaligned_ex_i(data_misaligned_ex),
       .data_misaligned_o   (data_misaligned),
-
-      .p_elw_start_o (p_elw_start),
-      .p_elw_finish_o(p_elw_finish),
-
 
       .lsu_ready_ex_o(lsu_ready_ex),
       .lsu_ready_wb_o(lsu_ready_wb),

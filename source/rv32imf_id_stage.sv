@@ -132,7 +132,6 @@ module rv32imf_id_stage
     output logic [1:0] data_type_ex_o,
     output logic [1:0] data_sign_ext_ex_o,
     output logic [1:0] data_reg_offset_ex_o,
-    output logic       data_load_event_ex_o,
 
     output logic data_misaligned_ex_o,
 
@@ -1248,7 +1247,6 @@ module rv32imf_id_stage
       data_sign_ext_ex_o     <= 2'b0;
       data_reg_offset_ex_o   <= 2'b0;
       data_req_ex_o          <= 1'b0;
-      data_load_event_ex_o   <= 1'b0;
       atop_ex_o              <= 5'b0;
 
       data_misaligned_ex_o   <= 1'b0;
@@ -1351,10 +1349,8 @@ module rv32imf_id_stage
           data_type_ex_o       <= data_type_id;
           data_sign_ext_ex_o   <= data_sign_ext_id;
           data_reg_offset_ex_o <= data_reg_offset_id;
-          data_load_event_ex_o <= data_load_event_id;
           atop_ex_o            <= atop_id;
         end else begin
-          data_load_event_ex_o <= 1'b0;
         end
 
         data_misaligned_ex_o <= 1'b0;
@@ -1375,8 +1371,6 @@ module rv32imf_id_stage
         csr_op_ex_o          <= CSR_OP_READ;
 
         data_req_ex_o        <= 1'b0;
-
-        data_load_event_ex_o <= 1'b0;
 
         data_misaligned_ex_o <= 1'b0;
 

@@ -1,6 +1,6 @@
 module fpnew_top #(
 
-    parameter fpnew_pkg::fpu_features_t       Features       = fpnew_pkg::RV64D_Xsflt,
+    parameter fpnew_pkg::fpu_features_t       Features       = fpnew_pkg::RV64D_XSFLT,
     parameter fpnew_pkg::fpu_implementation_t Implementation = fpnew_pkg::DEFAULT_NOREGS,
 
     parameter logic        PulpDivsqrt    = 1'b1,
