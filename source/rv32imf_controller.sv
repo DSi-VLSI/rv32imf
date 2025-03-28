@@ -1,161 +1,212 @@
 module rv32imf_controller
   import rv32imf_pkg::*;
 #(
+    // No parameters defined for this module
 ) (
-    input logic clk,
-    input logic clk_ungated_i,
-    input logic rst_n,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Clock and Reset
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic ctrl_busy_o,
-    output logic is_decoding_o,
-    input  logic is_fetch_failed_i,
+    input logic clk,            // Clock signal
+    input logic clk_ungated_i,  // Ungated clock signal
+    input logic rst_n,          // Active-low reset signal
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Control Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic deassert_we_o,
+    output logic ctrl_busy_o,       // Indicates if the control unit is busy
+    output logic is_decoding_o,     // Indicates if the instruction is being decoded
+    input  logic is_fetch_failed_i, // Indicates if the fetch failed
 
-    input logic illegal_insn_i,
-    input logic ecall_insn_i,
-    input logic mret_insn_i,
-    input logic uret_insn_i,
+    output logic deassert_we_o,  // Deassert write enable signal
 
-    input logic dret_insn_i,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Instruction Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic mret_dec_i,
-    input logic uret_dec_i,
-    input logic dret_dec_i,
+    input logic illegal_insn_i,  // Indicates illegal instruction
+    input logic ecall_insn_i,    // Indicates ECALL instruction
+    input logic mret_insn_i,     // Indicates MRET instruction
+    input logic uret_insn_i,     // Indicates URET instruction
+    input logic dret_insn_i,     // Indicates DRET instruction
 
-    input logic wfi_i,
-    input logic ebrk_insn_i,
-    input logic fencei_insn_i,
-    input logic csr_status_i,
+    input logic mret_dec_i,  // MRET decode signal
+    input logic uret_dec_i,  // URET decode signal
+    input logic dret_dec_i,  // DRET decode signal
 
-    output logic hwlp_mask_o,
+    input logic wfi_i,          // Indicates WFI instruction
+    input logic ebrk_insn_i,    // Indicates EBREAK instruction
+    input logic fencei_insn_i,  // Indicates FENCE.I instruction
+    input logic csr_status_i,   // CSR status signal
 
+    output logic hwlp_mask_o,  // Hardware loop mask signal
 
-    input logic instr_valid_i,
+    input logic instr_valid_i,  // Instruction valid signal
 
+    output logic instr_req_o,  // Instruction request signal
 
-    output logic instr_req_o,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Program Counter Control
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
+    output logic       pc_set_o,        // Program counter set signal
+    output logic [3:0] pc_mux_o,        // Program counter multiplexer select
+    output logic [2:0] exc_pc_mux_o,    // Exception program counter multiplexer select
+    output logic [1:0] trap_addr_mux_o, // Trap address multiplexer select
 
-    output logic       pc_set_o,
-    output logic [3:0] pc_mux_o,
-    output logic [2:0] exc_pc_mux_o,
-    output logic [1:0] trap_addr_mux_o,
+    input  logic [31:0] pc_id_i,          // Program counter value in the ID stage
+    output logic [31:0] hwlp_targ_addr_o, // Hardware loop target address
 
-    input  logic [31:0] pc_id_i,
-    output logic [31:0] hwlp_targ_addr_o,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Data Memory Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input  logic data_req_ex_i,
-    input  logic data_we_ex_i,
-    input  logic data_misaligned_i,
-    input  logic data_load_event_i,
-    input  logic data_err_i,
-    output logic data_err_ack_o,
+    input  logic data_req_ex_i,      // Data request signal in EX stage
+    input  logic data_we_ex_i,       // Data write enable in EX stage
+    input  logic data_misaligned_i,  // Data misaligned signal
+    input  logic data_load_event_i,  // Data load event signal
+    input  logic data_err_i,         // Data error signal
+    output logic data_err_ack_o,     // Data error acknowledgment
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Multiplier Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic mult_multicycle_i,
+    input logic mult_multicycle_i,  // Multiplier multicycle flag
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // APU Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic apu_en_i,
-    input logic apu_read_dep_i,
-    input logic apu_read_dep_for_jalr_i,
-    input logic apu_write_dep_i,
+    input logic apu_en_i,                 // APU enable signal
+    input logic apu_read_dep_i,           // APU read dependency signal
+    input logic apu_read_dep_for_jalr_i,  // APU read dependency for JALR
+    input logic apu_write_dep_i,          // APU write dependency signal
 
-    output logic apu_stall_o,
+    output logic apu_stall_o,  // APU stall signal
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Branch and Jump Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic       branch_taken_ex_i,
-    input logic [1:0] ctrl_transfer_insn_in_id_i,
-    input logic [1:0] ctrl_transfer_insn_in_dec_i,
+    input logic branch_taken_ex_i,  // Indicates if a branch is taken in the EX stage
+    input logic [1:0] ctrl_transfer_insn_in_id_i,  // Control transfer instruction in ID stage
+    input logic [1:0] ctrl_transfer_insn_in_dec_i,  // Control transfer instruction in decode stage
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Interrupt Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic            irq_req_ctrl_i,
-    input logic            irq_sec_ctrl_i,
-    input logic      [4:0] irq_id_ctrl_i,
-    input logic            irq_wu_ctrl_i,
-    input priv_lvl_t       current_priv_lvl_i,
+    input logic            irq_req_ctrl_i,     // IRQ request signal
+    input logic            irq_sec_ctrl_i,     // IRQ secondary signal
+    input logic      [4:0] irq_id_ctrl_i,      // IRQ ID
+    input logic            irq_wu_ctrl_i,      // IRQ wake-up signal
+    input priv_lvl_t       current_priv_lvl_i, // Current privilege level
 
-    output logic       irq_ack_o,
-    output logic [4:0] irq_id_o,
+    output logic       irq_ack_o,  // IRQ acknowledgment
+    output logic [4:0] irq_id_o,   // IRQ ID output
 
-    output logic [4:0] exc_cause_o,
+    output logic [4:0] exc_cause_o,  // Exception cause
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Debug Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic       debug_mode_o,
-    output logic [2:0] debug_cause_o,
-    output logic       debug_csr_save_o,
-    input  logic       debug_single_step_i,
-    input  logic       debug_ebreakm_i,
-    input  logic       debug_ebreaku_i,
-    input  logic       trigger_match_i,
-    output logic       debug_p_elw_no_sleep_o,
-    output logic       debug_wfi_no_sleep_o,
+    output logic       debug_mode_o,            // Debug mode enable
+    output logic [2:0] debug_cause_o,           // Debug cause
+    output logic       debug_csr_save_o,        // Debug CSR save flag
+    input  logic       debug_single_step_i,     // Debug single-step enable
+    input  logic       debug_ebreakm_i,         // Debug EBREAK in machine mode
+    input  logic       debug_ebreaku_i,         // Debug EBREAK in user mode
+    input  logic       trigger_match_i,         // Trigger match signal
+    output logic       debug_p_elw_no_sleep_o,  // Debug ELW no sleep flag
+    output logic       debug_wfi_no_sleep_o,    // Debug WFI no sleep flag
 
+    output logic wake_from_sleep_o,  // Wake from sleep signal
 
-    output logic wake_from_sleep_o,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // CSR Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic       csr_save_if_o,
-    output logic       csr_save_id_o,
-    output logic       csr_save_ex_o,
-    output logic [5:0] csr_cause_o,
-    output logic       csr_irq_sec_o,
-    output logic       csr_restore_mret_id_o,
-    output logic       csr_restore_uret_id_o,
+    output logic       csr_save_if_o,          // CSR save IF flag
+    output logic       csr_save_id_o,          // CSR save ID flag
+    output logic       csr_save_ex_o,          // CSR save EX flag
+    output logic [5:0] csr_cause_o,            // CSR cause
+    output logic       csr_irq_sec_o,          // CSR IRQ secondary flag
+    output logic       csr_restore_mret_id_o,  // CSR restore MRET flag
+    output logic       csr_restore_uret_id_o,  // CSR restore URET flag
+    output logic       csr_restore_dret_id_o,  // CSR restore DRET flag
+    output logic       csr_save_cause_o,       // CSR save cause flag
 
-    output logic csr_restore_dret_id_o,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Register File Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic csr_save_cause_o,
+    input logic       regfile_we_id_i,        // Register file write enable in ID stage
+    input logic [5:0] regfile_alu_waddr_id_i, // Register file ALU write address in ID stage
 
+    input logic       regfile_we_ex_i,     // Register file write enable in EX stage
+    input logic [5:0] regfile_waddr_ex_i,  // Register file write address in EX stage
+    input logic       regfile_we_wb_i,     // Register file write enable in WB stage
+    input logic       regfile_alu_we_fw_i, // Register file ALU write enable in FW stage
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Forwarding Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic       regfile_we_id_i,
-    input logic [5:0] regfile_alu_waddr_id_i,
+    output logic [1:0] operand_a_fw_mux_sel_o,  // Operand A forwarding multiplexer select
+    output logic [1:0] operand_b_fw_mux_sel_o,  // Operand B forwarding multiplexer select
+    output logic [1:0] operand_c_fw_mux_sel_o,  // Operand C forwarding multiplexer select
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Dependency Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic       regfile_we_ex_i,
-    input logic [5:0] regfile_waddr_ex_i,
-    input logic       regfile_we_wb_i,
-    input logic       regfile_alu_we_fw_i,
+    input logic reg_d_ex_is_reg_a_i,   // Dependency check for EX stage register A
+    input logic reg_d_ex_is_reg_b_i,   // Dependency check for EX stage register B
+    input logic reg_d_ex_is_reg_c_i,   // Dependency check for EX stage register C
+    input logic reg_d_wb_is_reg_a_i,   // Dependency check for WB stage register A
+    input logic reg_d_wb_is_reg_b_i,   // Dependency check for WB stage register B
+    input logic reg_d_wb_is_reg_c_i,   // Dependency check for WB stage register C
+    input logic reg_d_alu_is_reg_a_i,  // Dependency check for FW stage register A
+    input logic reg_d_alu_is_reg_b_i,  // Dependency check for FW stage register B
+    input logic reg_d_alu_is_reg_c_i,  // Dependency check for FW stage register C
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Halt Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic [1:0] operand_a_fw_mux_sel_o,
-    output logic [1:0] operand_b_fw_mux_sel_o,
-    output logic [1:0] operand_c_fw_mux_sel_o,
+    output logic halt_if_o,  // Halt instruction fetch signal
+    output logic halt_id_o,  // Halt ID stage signal
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Stall Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic reg_d_ex_is_reg_a_i,
-    input logic reg_d_ex_is_reg_b_i,
-    input logic reg_d_ex_is_reg_c_i,
-    input logic reg_d_wb_is_reg_a_i,
-    input logic reg_d_wb_is_reg_b_i,
-    input logic reg_d_wb_is_reg_c_i,
-    input logic reg_d_alu_is_reg_a_i,
-    input logic reg_d_alu_is_reg_b_i,
-    input logic reg_d_alu_is_reg_c_i,
+    output logic misaligned_stall_o,  // Misaligned stall signal
+    output logic jr_stall_o,          // Jump register stall signal
+    output logic load_stall_o,        // Load stall signal
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Pipeline Control
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    output logic halt_if_o,
-    output logic halt_id_o,
+    input logic id_ready_i,  // Indicates if the ID stage is ready
+    input logic id_valid_i,  // Indicates if the ID stage is valid
 
-    output logic misaligned_stall_o,
-    output logic jr_stall_o,
-    output logic load_stall_o,
+    input logic ex_valid_i,  // Indicates if the EX stage is valid
 
-    input logic id_ready_i,
-    input logic id_valid_i,
+    input logic wb_ready_i,  // Indicates if the WB stage is ready
 
-    input logic ex_valid_i,
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    // Performance Monitoring Signals
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
-    input logic wb_ready_i,
-
-
-    output logic perf_pipeline_stall_o
+    output logic perf_pipeline_stall_o  // Performance monitoring event: pipeline stall
 );
 
-
   ctrl_state_e ctrl_fsm_cs, ctrl_fsm_ns;
-
 
   debug_state_e debug_fsm_cs, debug_fsm_ns;
 
@@ -174,21 +225,9 @@ module rv32imf_controller
   logic debug_req_q;
   logic debug_req_pending;
 
-
   logic wfi_active;
 
-
-
-
-
-
-
-
-
-
-
   always_comb begin
-
 
     instr_req_o = 1'b1;
 
@@ -225,7 +264,8 @@ module rv32imf_controller
     irq_ack_o = 1'b0;
     irq_id_o = 5'b0;
 
-    jump_in_dec            = ctrl_transfer_insn_in_dec_i == BRANCH_JALR || ctrl_transfer_insn_in_dec_i == BRANCH_JAL;
+    jump_in_dec = ctrl_transfer_insn_in_dec_i == BRANCH_JALR
+                || ctrl_transfer_insn_in_dec_i == BRANCH_JAL;
 
     branch_in_id = ctrl_transfer_insn_in_id_i == BRANCH_COND;
 
@@ -236,13 +276,6 @@ module rv32imf_controller
     debug_mode_n = debug_mode_q;
 
     illegal_insn_n = illegal_insn_q;
-
-
-
-
-
-
-
 
     debug_req_entry_n = debug_req_entry_q;
 
@@ -262,7 +295,6 @@ module rv32imf_controller
         instr_req_o   = 1'b0;
         ctrl_fsm_ns   = BOOT_SET;
       end
-
 
       BOOT_SET: begin
         is_decoding_o = 1'b0;
@@ -286,16 +318,12 @@ module rv32imf_controller
         ctrl_fsm_ns   = SLEEP;
       end
 
-
       SLEEP: begin
-
 
         is_decoding_o = 1'b0;
         instr_req_o   = 1'b0;
         halt_if_o     = 1'b1;
         halt_id_o     = 1'b1;
-
-
 
         if (wake_from_sleep_o) begin
           if (debug_req_pending) begin
@@ -312,15 +340,9 @@ module rv32imf_controller
       FIRST_FETCH: begin
         is_decoding_o = 1'b0;
 
-
         ctrl_fsm_ns   = DECODE;
 
-
         if (irq_req_ctrl_i && ~(debug_req_pending || debug_mode_q)) begin
-
-
-
-
 
           halt_if_o     = 1'b1;
           halt_id_o     = 1'b1;
@@ -330,7 +352,6 @@ module rv32imf_controller
           exc_pc_mux_o  = EXC_PC_IRQ;
           exc_cause_o   = irq_id_ctrl_i;
           csr_irq_sec_o = irq_sec_ctrl_i;
-
 
           irq_ack_o     = 1'b1;
           irq_id_o      = irq_id_ctrl_i;
@@ -348,18 +369,12 @@ module rv32imf_controller
 
         if (branch_taken_ex_i) begin
 
-
           is_decoding_o = 1'b0;
 
           pc_mux_o      = PC_BRANCH;
           pc_set_o      = 1'b1;
 
-
-
-
-
         end else if (data_err_i) begin
-
 
           is_decoding_o    = 1'b0;
           halt_if_o        = 1'b1;
@@ -368,13 +383,10 @@ module rv32imf_controller
           csr_save_cause_o = 1'b1;
           data_err_ack_o   = 1'b1;
 
-
           csr_cause_o      = {1'b0, data_we_ex_i ? EXC_CAUSE_STORE_FAULT : EXC_CAUSE_LOAD_FAULT};
           ctrl_fsm_ns      = FLUSH_WB;
 
         end else if (is_fetch_failed_i) begin
-
-
 
           is_decoding_o    = 1'b0;
           halt_id_o        = 1'b1;
@@ -382,11 +394,8 @@ module rv32imf_controller
           csr_save_if_o    = 1'b1;
           csr_save_cause_o = !debug_mode_q;
 
-
-
           csr_cause_o      = {1'b0, EXC_CAUSE_INSTR_FAULT};
           ctrl_fsm_ns      = FLUSH_WB;
-
 
         end else if (instr_valid_i) begin : blk_decode_level1
 
@@ -414,7 +423,6 @@ module rv32imf_controller
             exc_cause_o   = irq_id_ctrl_i;
             csr_irq_sec_o = irq_sec_ctrl_i;
 
-
             irq_ack_o     = 1'b1;
             irq_id_o      = irq_id_ctrl_i;
 
@@ -435,13 +443,9 @@ module rv32imf_controller
 
             end else begin
 
-
               unique case (1'b1)
 
                 jump_in_dec: begin
-
-
-
 
                   pc_mux_o = PC_JUMP;
 
@@ -516,13 +520,6 @@ module rv32imf_controller
 
               halt_if_o = 1'b1;
 
-
-
-
-
-
-
-
               if (id_ready_i) begin
 
                 unique case (1'b1)
@@ -556,7 +553,6 @@ module rv32imf_controller
         end
       end
 
-
       FLUSH_EX: begin
         is_decoding_o = 1'b0;
 
@@ -571,7 +567,6 @@ module rv32imf_controller
 
           csr_cause_o      = {1'b0, data_we_ex_i ? EXC_CAUSE_STORE_FAULT : EXC_CAUSE_LOAD_FAULT};
           ctrl_fsm_ns      = FLUSH_WB;
-
 
           illegal_insn_n   = 1'b0;
         end else if (ex_valid_i) begin
@@ -602,8 +597,8 @@ module rv32imf_controller
           end
 
         end
-      end
 
+      end
 
       FLUSH_WB: begin
         is_decoding_o = 1'b0;
@@ -686,7 +681,6 @@ module rv32imf_controller
               end
               fencei_insn_i: begin
 
-
                 pc_mux_o = PC_FENCEI;
                 pc_set_o = 1'b1;
               end
@@ -715,7 +709,6 @@ module rv32imf_controller
           end
           dret_dec_i: begin
 
-
             pc_mux_o     = PC_DRET;
             pc_set_o     = 1'b1;
             debug_mode_n = 1'b0;
@@ -728,11 +721,9 @@ module rv32imf_controller
         end
       end
 
-
-
       DBG_WAIT_BRANCH: begin
         is_decoding_o = 1'b0;
-        halt_if_o = 1'b1;
+        halt_if_o     = 1'b1;
 
         if (branch_taken_ex_i) begin
 
@@ -743,21 +734,11 @@ module rv32imf_controller
         ctrl_fsm_ns = DBG_FLUSH;
       end
 
-
-
-
-
-
-
-
-
-
       DBG_TAKEN_ID: begin
         is_decoding_o = 1'b0;
         pc_set_o      = 1'b1;
         pc_mux_o      = PC_EXCEPTION;
         exc_pc_mux_o  = EXC_PC_DBD;
-
 
         if (~debug_mode_q) begin
           csr_save_cause_o = 1'b1;
@@ -773,8 +754,6 @@ module rv32imf_controller
         debug_mode_n      = 1'b1;
       end
 
-
-
       DBG_TAKEN_IF: begin
         is_decoding_o    = 1'b0;
         pc_set_o         = 1'b1;
@@ -789,7 +768,6 @@ module rv32imf_controller
         debug_mode_n         = 1'b1;
         debug_force_wakeup_n = 1'b0;
       end
-
 
       DBG_FLUSH: begin
         is_decoding_o = 1'b0;
@@ -808,11 +786,12 @@ module rv32imf_controller
           csr_cause_o      = {1'b0, data_we_ex_i ? EXC_CAUSE_STORE_FAULT : EXC_CAUSE_LOAD_FAULT};
           ctrl_fsm_ns      = FLUSH_WB;
         end else begin
-          if(debug_mode_q                          |
-             trigger_match_i                       |
-             (ebrk_force_debug_mode & ebrk_insn_i) |
-             data_load_event_i                     |
-             debug_req_entry_q                     )
+          if(debug_mode_q                                      |
+             trigger_match_i                                  |
+             (ebrk_force_debug_mode & ebrk_insn_i)             |
+             data_load_event_i                                |
+             debug_req_entry_q
+             )
             begin
             ctrl_fsm_ns = DBG_TAKEN_ID;
           end else begin
@@ -821,7 +800,6 @@ module rv32imf_controller
           end
         end
       end
-
 
       default: begin
         is_decoding_o = 1'b0;
@@ -835,28 +813,23 @@ module rv32imf_controller
     load_stall_o  = 1'b0;
     deassert_we_o = 1'b0;
 
-
     if (~is_decoding_o) deassert_we_o = 1'b1;
-
 
     if (illegal_insn_i) deassert_we_o = 1'b1;
 
-
     if (
           ( (data_req_ex_i == 1'b1) && (regfile_we_ex_i == 1'b1) ||
-           (wb_ready_i == 1'b0) && (regfile_we_wb_i == 1'b1)
+            (wb_ready_i == 1'b0) && (regfile_we_wb_i == 1'b1)
           ) &&
-          ( (reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1) || (reg_d_ex_is_reg_c_i == 1'b1) ||
-            (is_decoding_o && (regfile_we_id_i && !data_misaligned_i) && (regfile_waddr_ex_i == regfile_alu_waddr_id_i)) )
+          ( (reg_d_ex_is_reg_a_i == 1'b1) || (reg_d_ex_is_reg_b_i == 1'b1)
+         || (reg_d_ex_is_reg_c_i == 1'b1) || (is_decoding_o &&
+            (regfile_we_id_i && !data_misaligned_i)
+            && (regfile_waddr_ex_i == regfile_alu_waddr_id_i)))
        )
     begin
       deassert_we_o = 1'b1;
       load_stall_o  = 1'b1;
     end
-
-
-
-
 
     if ((ctrl_transfer_insn_in_dec_i == BRANCH_JALR) &&
         (((regfile_we_wb_i == 1'b1) && (reg_d_wb_is_reg_a_i == 1'b1)) ||
@@ -873,13 +846,9 @@ module rv32imf_controller
     end
   end
 
-
-
   assign misaligned_stall_o = data_misaligned_i;
 
-
   assign apu_stall_o = apu_read_dep_i | (apu_write_dep_i & ~apu_en_i);
-
 
   always_comb begin
 
@@ -887,20 +856,17 @@ module rv32imf_controller
     operand_b_fw_mux_sel_o = SEL_REGFILE;
     operand_c_fw_mux_sel_o = SEL_REGFILE;
 
-
     if (regfile_we_wb_i == 1'b1) begin
       if (reg_d_wb_is_reg_a_i == 1'b1) operand_a_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_wb_is_reg_b_i == 1'b1) operand_b_fw_mux_sel_o = SEL_FW_WB;
       if (reg_d_wb_is_reg_c_i == 1'b1) operand_c_fw_mux_sel_o = SEL_FW_WB;
     end
 
-
     if (regfile_alu_we_fw_i == 1'b1) begin
       if (reg_d_alu_is_reg_a_i == 1'b1) operand_a_fw_mux_sel_o = SEL_FW_EX;
       if (reg_d_alu_is_reg_b_i == 1'b1) operand_b_fw_mux_sel_o = SEL_FW_EX;
       if (reg_d_alu_is_reg_c_i == 1'b1) operand_c_fw_mux_sel_o = SEL_FW_EX;
     end
-
 
     if (data_misaligned_i) begin
       operand_a_fw_mux_sel_o = SEL_FW_EX;
@@ -909,7 +875,6 @@ module rv32imf_controller
       operand_c_fw_mux_sel_o = SEL_FW_EX;
     end
   end
-
 
   always_ff @(posedge clk, negedge rst_n) begin : UPDATE_REGS
     if (rst_n == 1'b0) begin
@@ -925,7 +890,6 @@ module rv32imf_controller
     end else begin
       ctrl_fsm_cs          <= ctrl_fsm_ns;
 
-
       jump_done_q          <= jump_done & (~id_ready_i);
 
       data_err_q           <= data_err_i;
@@ -939,31 +903,22 @@ module rv32imf_controller
     end
   end
 
-
   assign wake_from_sleep_o = irq_wu_ctrl_i || debug_req_pending || debug_mode_q;
-
 
   assign debug_mode_o = debug_mode_q;
   assign debug_req_pending = debug_req_q;
 
+  assign debug_p_elw_no_sleep_o = debug_mode_q || debug_req_q
+                                  || debug_single_step_i || trigger_match_i;
 
-  assign debug_p_elw_no_sleep_o = debug_mode_q || debug_req_q || debug_single_step_i || trigger_match_i;
-
-
-
-
-
-
-  assign debug_wfi_no_sleep_o = debug_mode_q || debug_req_pending || debug_single_step_i || trigger_match_i;
-
+  assign debug_wfi_no_sleep_o = debug_mode_q || debug_req_pending
+                                  || debug_single_step_i || trigger_match_i;
 
   assign wfi_active = wfi_i & ~debug_wfi_no_sleep_o;
-
 
   always_ff @(posedge clk_ungated_i, negedge rst_n)
     if (!rst_n) debug_req_q <= 1'b0;
     else if (debug_mode_q) debug_req_q <= 1'b0;
-
 
   always_ff @(posedge clk, negedge rst_n) begin
     if (rst_n == 1'b0) begin

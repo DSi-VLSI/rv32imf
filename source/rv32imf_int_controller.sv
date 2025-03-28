@@ -1,53 +1,58 @@
-
-
-
 module rv32imf_int_controller
   import rv32imf_pkg::*;
 #(
 ) (
-    input logic clk,
-    input logic rst_n,
+    input logic clk,   // Clock input
+    input logic rst_n, // Asynchronous reset, active low
 
-    input logic [31:0] irq_i,
-    input logic        irq_sec_i,
+    input logic [31:0] irq_i,     // Interrupt input vector
+    input logic        irq_sec_i, // Secure interrupt input
 
-    output logic       irq_req_ctrl_o,
-    output logic       irq_sec_ctrl_o,
-    output logic [4:0] irq_id_ctrl_o,
-    output logic       irq_wu_ctrl_o,
+    output logic       irq_req_ctrl_o,  // Interrupt request to controller
+    output logic       irq_sec_ctrl_o,  // Secure interrupt to controller
+    output logic [4:0] irq_id_ctrl_o,   // Interrupt ID to controller
+    output logic       irq_wu_ctrl_o,   // Interrupt wake-up to controller
 
-    input  logic      [31:0] mie_bypass_i,
-    output logic      [31:0] mip_o,
-    input  logic             m_ie_i,
-    input  logic             u_ie_i,
-    input  priv_lvl_t        current_priv_lvl_i
+    input  logic      [31:0] mie_bypass_i,       // MIE bypass input (for testing)
+    output logic      [31:0] mip_o,              // MIP register output
+    input  logic             m_ie_i,             // MIE (Machine Interrupt Enable) input
+    input  logic             u_ie_i,             // UIE (User Interrupt Enable) input
+    input  priv_lvl_t        current_priv_lvl_i  // Current privilege level
 );
 
-
+  // Internal signals
   logic        global_irq_enable;
   logic [31:0] irq_local_qual;
   logic [31:0] irq_q;
   logic        irq_sec_q;
 
-
+  // Register to store interrupt inputs
   always_ff @(posedge clk, negedge rst_n) begin
     if (rst_n == 1'b0) begin
-      irq_q     <= '0;
-      irq_sec_q <= 1'b0;
+      irq_q     <= '0;  // Initialize interrupt queue
+      irq_sec_q <= 1'b0;  // Initialize secure interrupt
     end else begin
-      irq_q     <= irq_i & IRQ_MASK;
-      irq_sec_q <= irq_sec_i;
+      irq_q <= irq_i & IRQ_MASK;  // Mask irrelevant interrupt bits
+      irq_sec_q <= irq_sec_i;  // Store secure interrupt input
     end
   end
 
-
+  // Assign MIP register (Machine Interrupt Pending)
   assign mip_o = irq_q;
+
+  // Determine locally qualified interrupts (after masking)
   assign irq_local_qual = irq_q & mie_bypass_i;
+
+  // Wake-up signal: any qualified interrupt
   assign irq_wu_ctrl_o = |(irq_i & mie_bypass_i);
+
+  // Global interrupt enable: MIE bit
   assign global_irq_enable = m_ie_i;
+
+  // Interrupt request to the controller: any local IRQ and global enable
   assign irq_req_ctrl_o = (|irq_local_qual) && global_irq_enable;
 
-
+  // Logic to determine the highest priority interrupt ID
   always_comb begin
     if (irq_local_qual[31]) irq_id_ctrl_o = 5'd31;
     else if (irq_local_qual[30]) irq_id_ctrl_o = 5'd30;
@@ -81,10 +86,10 @@ module rv32imf_int_controller
     else if (irq_local_qual[8]) irq_id_ctrl_o = 5'd8;
     else if (irq_local_qual[0]) irq_id_ctrl_o = 5'd0;
     else if (irq_local_qual[4]) irq_id_ctrl_o = 5'd4;
-    else irq_id_ctrl_o = CSR_MTIX_BIT;
+    else irq_id_ctrl_o = CSR_MTIX_BIT;  // Default interrupt ID
   end
 
-
+  // Output the secure interrupt signal
   assign irq_sec_ctrl_o = irq_sec_q;
 
 endmodule
