@@ -8,9 +8,16 @@ module rv32imf_tb;
   // DEFINES
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Define macros for accessing General Purpose Registers (GPR) and Floating Point Registers (FPR)
-  `define GPR rv32imf_tb.u_rv32imf.core_i.id_stage_i.register_file_i.mem
-  `define FPR rv32imf_tb.u_rv32imf.core_i.id_stage_i.register_file_i.mem_fp
+  `define CORE rv32imf_tb.u_rv32imf.core_i
+
+  `define IS_STAGE `CORE.id_stage_i
+  `define EX_STAGE `CORE.ex_stage_i
+
+  `define REGFILE `IS_STAGE.register_file_i
+
+  `define GPR `REGFILE.mem
+  `define FPR `REGFILE.mem_fp
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // DUT Instantiation
@@ -126,25 +133,64 @@ module rv32imf_tb;
     #100ns;
   endtask
 
-  // Task to dump the register file contents to a CSV file
-  task static dump_regfile();
-    int clk_count;
-    int reg_dump;
-    clk_count = 0;
-    reg_dump  = $fopen("reg_dump.csv", "w");
-    $fwrite(reg_dump, "CLOCK,",);
-    for (int i = 0; i < 32; i++) $fwrite(reg_dump, "GPR%0d,", i);
-    for (int i = 0; i < 32; i++) $fwrite(reg_dump, "FPR%0d,", i);
-    $fwrite(reg_dump, "\n");
+  mailbox #(int) pc_mbx = new();
+  mailbox #(bit) rf_read_req_mbx = new();
+  mailbox #(string) rf_change_dump_mbx = new();
+
+  // Task to dump trace
+  task static dump_trace();
+    int file_pointer;
+    int running_pc;
+    logic [31:0] rf_states[2][32];
+    running_pc   = 0;
+    file_pointer = $fopen("trace.txt", "w");
     fork
       forever begin
-        string text;
-        clk_count++;
-        @(posedge clk);
-        $fwrite(reg_dump, "%08d,", clk_count);
-        for (int i = 0; i < 32; i++) $fwrite(reg_dump, "0x%08x,", `GPR[i]);
-        for (int i = 0; i < 32; i++) $fwrite(reg_dump, "0x%08x,", `FPR[i]);
-        $fwrite(reg_dump, "\n");
+        @(posedge `IS_STAGE.clk);
+        if (`IS_STAGE.rst_n && `IS_STAGE.pc_id_i[31:0] != running_pc) begin
+          running_pc = `IS_STAGE.pc_id_i[31:0];
+          pc_mbx.put(`IS_STAGE.pc_id_i[31:0]);
+        end
+      end
+      forever begin
+        @(posedge `EX_STAGE.clk);
+        if (`EX_STAGE.rst_n && `EX_STAGE.ex_valid_o && `EX_STAGE.ex_ready_o) begin
+          rf_read_req_mbx.put(1'b1);
+        end
+      end
+      forever begin
+        @(`REGFILE.rst_n);
+        for (int i = 0; i < 32; i++) begin
+          rf_states[0][i] = `GPR[i];
+          rf_states[0][i] = `FPR[i];
+        end
+      end
+      forever begin
+        bit rf_read_req;
+        string txt;
+        txt = "";
+        rf_read_req_mbx.get(rf_read_req);
+        @(negedge `REGFILE.clk);
+        foreach (`GPR[i]) begin
+          if (`GPR[i] != rf_states[0][i]) begin
+            $sformat(txt, "%sGPR%0d: 0x%08x -> 0x%08x\n", txt, i, rf_states[0][i], `GPR[i]);
+            rf_states[0][i] = `GPR[i];
+          end
+        end
+        foreach (`FPR[i]) begin
+          if (`FPR[i] != rf_states[1][i]) begin
+            $sformat(txt, "%sFPR%0d: 0x%08x -> 0x%08x\n", txt, i, rf_states[1][i], `FPR[i]);
+            rf_states[1][i] = `FPR[i];
+          end
+        end
+        rf_change_dump_mbx.put(txt);
+      end
+      forever begin
+        int program_counter;
+        string rf_change_dump;
+        pc_mbx.get(program_counter);
+        rf_change_dump_mbx.get(rf_change_dump);
+        $fwrite(file_pointer, "PROGRAM_COUNTER:0x%0h\n%s\n\n", program_counter, rf_change_dump);
       end
     join_none
   endtask
@@ -218,9 +264,9 @@ module rv32imf_tb;
     fork
       begin
         @(posedge clk);
-        irq <= 'h800; // Assert interrupt
+        irq <= 'h800;  // Assert interrupt
         @(posedge clk);
-        irq <= 'h0; // Deassert interrupt
+        irq <= 'h0;  // Deassert interrupt
       end
     join_none
   end
@@ -234,12 +280,16 @@ module rv32imf_tb;
     // Set time format to microseconds
     $timeformat(-6, 3, "us");
 
-    // Dump VCD file
-    $dumpfile("rv32imf_tb.vcd");
-    $dumpvars(0, rv32imf_tb);
+    if ($test$plusargs("DEBUG")) begin
+      $display("\033[1;33m###### DEBUG ENABLED ######\033[0m");
 
-    // Dump register file contents to CSV file
-    dump_regfile();
+      // Dump VCD file
+      $dumpfile("rv32imf_tb.vcd");
+      $dumpvars(0, rv32imf_tb);
+
+      // Dump trace
+      dump_trace();
+    end
 
     // Load simulation memory and symbols
     load_memory("prog.hex");
