@@ -294,7 +294,7 @@ module rv32imf_tb;
       $display("\033[1;33m###### DEBUG ENABLED ######\033[0m");
 
       // Dump VCD file
-      $dumpfile("rv32imf_tb.vcd");
+      $dumpfile("prog.vcd");
       $dumpvars(0, rv32imf_tb);
 
       // Dump trace

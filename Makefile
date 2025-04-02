@@ -18,6 +18,13 @@ else
 	TESTPLUSARGS = 
 endif
 
+# if build/test exists, then TEST=read build/test, else none
+ifeq ($(wildcard build/test),)
+	TEST ?=
+else
+	TEST := $(file <build/test)
+endif
+
 ################################################################################
 # Add all the RTL source files to the LIB variable
 ################################################################################
@@ -117,6 +124,8 @@ compile: build
 # Define the 'run' target to run the tests
 .PHONY: run
 run: build/done
+	@echo -n "$(TEST)" > build/test
+	@echo -e "\033[1;33mRunning $(TEST)\033[0m"
 	@make -s test TEST=$(TEST)
 	@cd build; xsim top $(TESTPLUSARGS) -runall | $(GREP_EW)
 ifeq ($(DEBUG), 1)
@@ -215,15 +224,24 @@ test: build
 	@riscv64-unknown-elf-nm build/prog.elf > build/prog.sym
 	@riscv64-unknown-elf-objdump -d build/prog.elf > build/prog.dump
 
+.PHONY: wave
+wave:
+# if build/prog.vcd doesn't exist, make run
+	@if [ ! -f build/prog.vcd ] || [ "$(TEST)" != "$(file <build/test)" ]; then \
+			make -s run TEST=$(TEST) DEBUG=1; \
+	fi
+	@gtkwave build/prog.vcd &
+
 # Define the 'help' target to display usage information
 .PHONY: help
 help:
 	@echo -e "\033[1;32mUsage:\033[0m"
-	@echo -e "\033[1;35m  make help                \033[0m# Display this help message"
-	@echo -e "\033[1;35m  make clean               \033[0m# Remove the build directory"
-	@echo -e "\033[1;35m  make vivado TEST=<test>  \033[0m# Clean and run the build"
-	@echo -e "\033[1;35m  make run TEST=<test>     \033[0m# Run the tests"
+	@echo -e "\033[1;35m  make help                    \033[0m# Display this help message"
+	@echo -e "\033[1;35m  make clean                   \033[0m# Remove the build directory"
+	@echo -e "\033[1;35m  make vivado TEST=<test>      \033[0m# Clean and run the build"
+	@echo -e "\033[1;35m  make run TEST=<test>         \033[0m# Run the tests"
 	@echo -e "\033[1;35m  make run TEST=<test> DEBUG=1 \033[0m# Run the tests with debug mode"
+	@echo -e "\033[1;35m  make wave                    \033[0m# Open GTKWave with the VCD file"
 	@echo -e ""
 	@echo -e "\033[1;32mExamples:\033[0m"
 	@for file in $(shell ls tests); do \
