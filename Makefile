@@ -126,70 +126,70 @@ endif
 # Define the 'readable' target to make the trace file more readable
 .PHONY: readable
 readable: build/trace.txt
-	@sed "s/GPR0:/x0\/zero:/g" -i build/trace.txt
-	@sed "s/GPR1:/x1\/ra:/g" -i build/trace.txt
-	@sed "s/GPR2:/x2\/sp:/g" -i build/trace.txt
-	@sed "s/GPR3:/x3\/gp:/g" -i build/trace.txt
-	@sed "s/GPR4:/x4\/tp:/g" -i build/trace.txt
-	@sed "s/GPR5:/x5\/t0:/g" -i build/trace.txt
-	@sed "s/GPR6:/x6\/t1:/g" -i build/trace.txt
-	@sed "s/GPR7:/x7\/t2:/g" -i build/trace.txt
-	@sed "s/GPR8:/x8\/s0\/fp:/g" -i build/trace.txt
-	@sed "s/GPR9:/x9\/s1:/g" -i build/trace.txt
-	@sed "s/GPR10:/x10\/a0:/g" -i build/trace.txt
-	@sed "s/GPR11:/x11\/a1:/g" -i build/trace.txt
-	@sed "s/GPR12:/x12\/a2:/g" -i build/trace.txt
-	@sed "s/GPR13:/x13\/a3:/g" -i build/trace.txt
-	@sed "s/GPR14:/x14\/a4:/g" -i build/trace.txt
-	@sed "s/GPR15:/x15\/a5:/g" -i build/trace.txt
-	@sed "s/GPR16:/x16\/a6:/g" -i build/trace.txt
-	@sed "s/GPR17:/x17\/a7:/g" -i build/trace.txt
-	@sed "s/GPR18:/x18\/s2:/g" -i build/trace.txt
-	@sed "s/GPR19:/x19\/s3:/g" -i build/trace.txt
-	@sed "s/GPR20:/x20\/s4:/g" -i build/trace.txt
-	@sed "s/GPR21:/x21\/s5:/g" -i build/trace.txt
-	@sed "s/GPR22:/x22\/s6:/g" -i build/trace.txt
-	@sed "s/GPR23:/x23\/s7:/g" -i build/trace.txt
-	@sed "s/GPR24:/x24\/s8:/g" -i build/trace.txt
-	@sed "s/GPR25:/x25\/s9:/g" -i build/trace.txt
-	@sed "s/GPR26:/x26\/s10:/g" -i build/trace.txt
-	@sed "s/GPR27:/x27\/s11:/g" -i build/trace.txt
-	@sed "s/GPR28:/x28\/t3:/g" -i build/trace.txt
-	@sed "s/GPR29:/x29\/t4:/g" -i build/trace.txt
-	@sed "s/GPR30:/x30\/t5:/g" -i build/trace.txt
-	@sed "s/GPR31:/x31\/t6:/g" -i build/trace.txt
-	@sed "s/FPR0:/f0\/ft0:/g" -i build/trace.txt
-	@sed "s/FPR1:/f1\/ft1:/g" -i build/trace.txt
-	@sed "s/FPR2:/f2\/ft2:/g" -i build/trace.txt
-	@sed "s/FPR3:/f3\/ft3:/g" -i build/trace.txt
-	@sed "s/FPR4:/f4\/ft4:/g" -i build/trace.txt
-	@sed "s/FPR5:/f5\/ft5:/g" -i build/trace.txt
-	@sed "s/FPR6:/f6\/ft6:/g" -i build/trace.txt
-	@sed "s/FPR7:/f7\/ft7:/g" -i build/trace.txt
-	@sed "s/FPR8:/f8\/fs0:/g" -i build/trace.txt
-	@sed "s/FPR9:/f9\/fs1:/g" -i build/trace.txt
-	@sed "s/FPR10:/f10\/fa0:/g" -i build/trace.txt
-	@sed "s/FPR11:/f11\/fa1:/g" -i build/trace.txt
-	@sed "s/FPR12:/f12\/fa2:/g" -i build/trace.txt
-	@sed "s/FPR13:/f13\/fa3:/g" -i build/trace.txt
-	@sed "s/FPR14:/f14\/fa4:/g" -i build/trace.txt
-	@sed "s/FPR15:/f15\/fa5:/g" -i build/trace.txt
-	@sed "s/FPR16:/f16\/fa6:/g" -i build/trace.txt
-	@sed "s/FPR17:/f17\/fa7:/g" -i build/trace.txt
-	@sed "s/FPR18:/f18\/fs2:/g" -i build/trace.txt
-	@sed "s/FPR19:/f19\/fs3:/g" -i build/trace.txt
-	@sed "s/FPR20:/f20\/fs4:/g" -i build/trace.txt
-	@sed "s/FPR21:/f21\/fs5:/g" -i build/trace.txt
-	@sed "s/FPR22:/f22\/fs6:/g" -i build/trace.txt
-	@sed "s/FPR23:/f23\/fs7:/g" -i build/trace.txt
-	@sed "s/FPR24:/f24\/fs8:/g" -i build/trace.txt
-	@sed "s/FPR25:/f25\/fs9:/g" -i build/trace.txt
-	@sed "s/FPR26:/f26\/fs10:/g" -i build/trace.txt
-	@sed "s/FPR27:/f27\/fs11:/g" -i build/trace.txt
-	@sed "s/FPR28:/f28\/ft8:/g" -i build/trace.txt
-	@sed "s/FPR29:/f29\/ft9:/g" -i build/trace.txt
-	@sed "s/FPR30:/f30\/ft10:/g" -i build/trace.txt
-	@sed "s/FPR31:/f31\/ft11:/g" -i build/trace.txt
+	@sed -i -e "s/GPR0:/x0\/zero:/g" \
+		-e "s/GPR1:/x1\/ra:/g" \
+		-e "s/GPR2:/x2\/sp:/g" \
+		-e "s/GPR3:/x3\/gp:/g" \
+		-e "s/GPR4:/x4\/tp:/g" \
+		-e "s/GPR5:/x5\/t0:/g" \
+		-e "s/GPR6:/x6\/t1:/g" \
+		-e "s/GPR7:/x7\/t2:/g" \
+		-e "s/GPR8:/x8\/s0\/fp:/g" \
+		-e "s/GPR9:/x9\/s1:/g" \
+		-e "s/GPR10:/x10\/a0:/g" \
+		-e "s/GPR11:/x11\/a1:/g" \
+		-e "s/GPR12:/x12\/a2:/g" \
+		-e "s/GPR13:/x13\/a3:/g" \
+		-e "s/GPR14:/x14\/a4:/g" \
+		-e "s/GPR15:/x15\/a5:/g" \
+		-e "s/GPR16:/x16\/a6:/g" \
+		-e "s/GPR17:/x17\/a7:/g" \
+		-e "s/GPR18:/x18\/s2:/g" \
+		-e "s/GPR19:/x19\/s3:/g" \
+		-e "s/GPR20:/x20\/s4:/g" \
+		-e "s/GPR21:/x21\/s5:/g" \
+		-e "s/GPR22:/x22\/s6:/g" \
+		-e "s/GPR23:/x23\/s7:/g" \
+		-e "s/GPR24:/x24\/s8:/g" \
+		-e "s/GPR25:/x25\/s9:/g" \
+		-e "s/GPR26:/x26\/s10:/g" \
+		-e "s/GPR27:/x27\/s11:/g" \
+		-e "s/GPR28:/x28\/t3:/g" \
+		-e "s/GPR29:/x29\/t4:/g" \
+		-e "s/GPR30:/x30\/t5:/g" \
+		-e "s/GPR31:/x31\/t6:/g" \
+		-e "s/FPR0:/f0\/ft0:/g" \
+		-e "s/FPR1:/f1\/ft1:/g" \
+		-e "s/FPR2:/f2\/ft2:/g" \
+		-e "s/FPR3:/f3\/ft3:/g" \
+		-e "s/FPR4:/f4\/ft4:/g" \
+		-e "s/FPR5:/f5\/ft5:/g" \
+		-e "s/FPR6:/f6\/ft6:/g" \
+		-e "s/FPR7:/f7\/ft7:/g" \
+		-e "s/FPR8:/f8\/fs0:/g" \
+		-e "s/FPR9:/f9\/fs1:/g" \
+		-e "s/FPR10:/f10\/fa0:/g" \
+		-e "s/FPR11:/f11\/fa1:/g" \
+		-e "s/FPR12:/f12\/fa2:/g" \
+		-e "s/FPR13:/f13\/fa3:/g" \
+		-e "s/FPR14:/f14\/fa4:/g" \
+		-e "s/FPR15:/f15\/fa5:/g" \
+		-e "s/FPR16:/f16\/fa6:/g" \
+		-e "s/FPR17:/f17\/fa7:/g" \
+		-e "s/FPR18:/f18\/fs2:/g" \
+		-e "s/FPR19:/f19\/fs3:/g" \
+		-e "s/FPR20:/f20\/fs4:/g" \
+		-e "s/FPR21:/f21\/fs5:/g" \
+		-e "s/FPR22:/f22\/fs6:/g" \
+		-e "s/FPR23:/f23\/fs7:/g" \
+		-e "s/FPR24:/f24\/fs8:/g" \
+		-e "s/FPR25:/f25\/fs9:/g" \
+		-e "s/FPR26:/f26\/fs10:/g" \
+		-e "s/FPR27:/f27\/fs11:/g" \
+		-e "s/FPR28:/f28\/ft8:/g" \
+		-e "s/FPR29:/f29\/ft9:/g" \
+		-e "s/FPR30:/f30\/ft10:/g" \
+		-e "s/FPR31:/f31\/ft11:/g" build/trace.txt
 	@$(eval list := $(shell grep -r "PROGRAM_COUNTER:0x" build/trace.txt | sed "s/PROGRAM_COUNTER:0x//g"))
 	@$(foreach item,$(list),$(call replace,$(item));)
 	@echo "build/trace.txt ready for reading"
