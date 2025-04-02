@@ -125,7 +125,7 @@ endif
 
 # Define the 'readable' target to make the trace file more readable
 .PHONY: readable
-readable: build/trace.txt
+readable: build/prog.trace
 	@sed -i -e "s/GPR0:/x0\/zero:/g" \
 		-e "s/GPR1:/x1\/ra:/g" \
 		-e "s/GPR2:/x2\/sp:/g" \
@@ -189,15 +189,15 @@ readable: build/trace.txt
 		-e "s/FPR28:/f28\/ft8:/g" \
 		-e "s/FPR29:/f29\/ft9:/g" \
 		-e "s/FPR30:/f30\/ft10:/g" \
-		-e "s/FPR31:/f31\/ft11:/g" build/trace.txt
-	@$(eval list := $(shell grep -r "PROGRAM_COUNTER:0x" build/trace.txt | sed "s/PROGRAM_COUNTER:0x//g"))
+		-e "s/FPR31:/f31\/ft11:/g" build/prog.trace
+	@$(eval list := $(shell grep -rF "PROGRAM_COUNTER:0x" build/prog.trace | sed "s/PROGRAM_COUNTER:0x//g"))
 	@$(foreach item,$(list),$(call replace,$(item));)
-	@echo "build/trace.txt ready for reading"
+	@echo "build/prog.trace ready for reading"
 
 define replace
-$(eval line_f :=$(shell grep -r "PROGRAM_COUNTER:0x$(1)" build/trace.txt))
-$(eval line_r :=$(shell grep -r "$(1):" build/$(TEST).dump))
-sed "s/$(line_f)/$(line_r)/g" -i build/trace.txt
+$(eval line_f :=$(shell grep -m 1 -r "PROGRAM_COUNTER:0x$(1)" build/prog.trace))
+$(eval line_r :=$(shell grep -m 1 -r "$(1):" build/prog.dump))
+sed "s/$(line_f)/$(line_r)/g" -i build/prog.trace
 endef
 
 build/readable:
@@ -210,10 +210,10 @@ test: build
 	@if [ ! -f tests/$(TEST) ]; then echo -e "\033[1;31mtests/$(TEST) does not exist\033[0m"; exit 1; fi
 	@$(eval TEST_TYPE := $(shell echo "$(TEST)" | sed "s/.*\.//g"))
 	@if [ "$(TEST_TYPE)" = "c" ]; then TEST_ARGS="lib/startup.s"; else TEST_ARGS=""; fi; \
-		$(RV64G_GCC) -o build/$(TEST).elf tests/$(TEST) $$TEST_ARGS -Ilib
-	@riscv64-unknown-elf-objcopy -O verilog build/$(TEST).elf build/prog.hex
-	@riscv64-unknown-elf-nm build/$(TEST).elf > build/prog.sym
-	@riscv64-unknown-elf-objdump -d build/$(TEST).elf > build/$(TEST).dump
+		$(RV64G_GCC) -o build/prog.elf tests/$(TEST) $$TEST_ARGS -Ilib
+	@riscv64-unknown-elf-objcopy -O verilog build/prog.elf build/prog.hex
+	@riscv64-unknown-elf-nm build/prog.elf > build/prog.sym
+	@riscv64-unknown-elf-objdump -d build/prog.elf > build/prog.dump
 
 # Define the 'help' target to display usage information
 .PHONY: help

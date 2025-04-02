@@ -10,10 +10,11 @@ module rv32imf_tb;
 
   `define CORE rv32imf_tb.u_rv32imf.core_i
 
-  `define IS_STAGE `CORE.id_stage_i
+  `define IF_STAGE `CORE.if_stage_i
+  `define ID_STAGE `CORE.id_stage_i
   `define EX_STAGE `CORE.ex_stage_i
 
-  `define REGFILE `IS_STAGE.register_file_i
+  `define REGFILE `ID_STAGE.register_file_i
 
   `define GPR `REGFILE.mem
   `define FPR `REGFILE.mem_fp
@@ -143,13 +144,22 @@ module rv32imf_tb;
     int running_pc;
     logic [31:0] rf_states[2][32];
     running_pc   = 0;
-    file_pointer = $fopen("trace.txt", "w");
+    file_pointer = $fopen("prog.trace", "w");
     fork
       forever begin
-        @(posedge `IS_STAGE.clk);
-        if (`IS_STAGE.rst_n && `IS_STAGE.pc_id_i[31:0] != running_pc) begin
-          running_pc = `IS_STAGE.pc_id_i[31:0];
-          pc_mbx.put(`IS_STAGE.pc_id_i[31:0]);
+        fork
+          @(negedge `IF_STAGE.clk);
+          @(negedge `ID_STAGE.clk);
+        join_any
+        if (`IF_STAGE.rst_n && `IF_STAGE.branch_req) begin
+          running_pc = `IF_STAGE.branch_addr_n;
+          pc_mbx.put(`IF_STAGE.branch_addr_n);
+          while(`ID_STAGE.pc_id_i != running_pc) begin
+            @(posedge `IF_STAGE.clk);
+          end
+        end else if (`ID_STAGE.rst_n && `ID_STAGE.pc_id_i != running_pc) begin
+          running_pc = `ID_STAGE.pc_id_i;
+          pc_mbx.put(`ID_STAGE.pc_id_i);
         end
       end
       forever begin
