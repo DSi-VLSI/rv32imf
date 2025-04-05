@@ -134,15 +134,17 @@ module rv32imf_tb;
     #100ns;
   endtask
 
-  mailbox #(int) pc_mbx = new();
-  mailbox #(bit) rf_read_req_mbx = new();
-  mailbox #(string) rf_change_dump_mbx = new();
-
   // Task to dump trace
   task static dump_trace();
     int file_pointer;
     int running_pc;
     logic [31:0] rf_states[2][32];
+    mailbox #(int) pc_mbx = new();
+    mailbox #(bit) rf_read_req_mbx = new();
+    mailbox #(string) rf_change_dump_mbx = new();
+    mailbox #(string) dmem_p1_mbx = new();
+    mailbox #(string) dmem_p2_mbx = new();
+    mailbox #(string) dmem_final_mbx = new();
     running_pc   = 0;
     file_pointer = $fopen("prog.trace", "w");
     fork
@@ -154,7 +156,7 @@ module rv32imf_tb;
         if (`IF_STAGE.rst_n && `IF_STAGE.branch_req) begin
           running_pc = `IF_STAGE.branch_addr_n;
           pc_mbx.put(`IF_STAGE.branch_addr_n);
-          while(`ID_STAGE.pc_id_i != running_pc) begin
+          while (`ID_STAGE.pc_id_i != running_pc) begin
             @(posedge `IF_STAGE.clk);
           end
         end else if (`ID_STAGE.rst_n && `ID_STAGE.pc_id_i != running_pc) begin
@@ -196,11 +198,45 @@ module rv32imf_tb;
         rf_change_dump_mbx.put(txt);
       end
       forever begin
+        @(posedge clk);
+        if (rst_n && data_req && data_gnt) begin
+          string txt;
+          txt = "";
+          $sformat(txt, "WE:%0d ADDR:0x%08h BE:0b%04b WDATA:0x%08h", data_we, data_addr, data_be, data_wdata);
+          dmem_p1_mbx.put(txt);
+        end 
+      end
+      forever begin
+        @(posedge clk);
+        if (rst_n && data_rvalid) begin
+          string txt;
+          txt = "";
+          $sformat(txt, "RDATA:0x%08h", data_rdata);
+          dmem_p2_mbx.put(txt);
+        end 
+      end
+      forever begin
+        string p1;
+        string p2;
+        dmem_p1_mbx.get(p1);
+        dmem_p2_mbx.get(p2);
+        dmem_final_mbx.put($sformatf("MEM %s %s", p1, p2));
+      end
+      forever begin
         int program_counter;
         string rf_change_dump;
         pc_mbx.get(program_counter);
         rf_change_dump_mbx.get(rf_change_dump);
-        $fwrite(file_pointer, "PROGRAM_COUNTER:0x%0h\n%s\n\n", program_counter, rf_change_dump);
+        $fwrite(file_pointer, "PROGRAM_COUNTER:0x%0h\n", program_counter);
+        if (dmem_final_mbx.num()) begin
+          while (dmem_final_mbx.num()) begin
+            string dmem_dump;
+            dmem_final_mbx.get(dmem_dump);
+            $fwrite(file_pointer, "%s\n", dmem_dump);
+          end
+        end
+        $fwrite(file_pointer, "%s\n", rf_change_dump);
+        $fwrite(file_pointer, "\n");
       end
     join_none
   endtask
