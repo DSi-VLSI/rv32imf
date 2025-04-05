@@ -202,7 +202,10 @@ module rv32imf_tb;
         if (rst_n && data_req && data_gnt) begin
           string txt;
           txt = "";
-          $sformat(txt, "WE:%0d ADDR:0x%08h BE:0b%04b WDATA:0x%08h", data_we, data_addr, data_be, data_wdata);
+          $sformat(txt, "%s ADDR:0x%08h BE:0b%04b", (data_we ? "WR" : "RD"), data_addr, data_be);
+          if (data_we) begin
+            $sformat(txt, "%s DATA:0x%08h", txt, data_wdata);
+          end
           dmem_p1_mbx.put(txt);
         end 
       end
@@ -220,7 +223,11 @@ module rv32imf_tb;
         string p2;
         dmem_p1_mbx.get(p1);
         dmem_p2_mbx.get(p2);
-        dmem_final_mbx.put($sformatf("MEM %s %s", p1, p2));
+        if (p1[0] == "R") begin
+          dmem_final_mbx.put($sformatf("DMEM %s %s", p1, p2));
+        end else if (p1[0] == "W") begin
+          dmem_final_mbx.put($sformatf("DMEM %s", p1));
+        end
       end
       forever begin
         int program_counter;
