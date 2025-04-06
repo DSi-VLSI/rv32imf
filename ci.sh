@@ -59,11 +59,11 @@ find tests -type f -name "_*" | sed "s/.*\//    /g" | sort
 skip_count=$(find tests -type f -name "_*" | wc -l)
 
 echo ""
-echo -e -n "  \033[1;32mPASSED\033[0m:$pass_count"
-echo -e -n "  \033[1;31mFAILED\033[0m:$fail_count"
-echo -e -n "  \033[1;31mERROR \033[0m:$error_count"
+echo -e -n "  \033[1;32mPASSED \033[0m:$pass_count"
+echo -e -n "  \033[1;31mFAILED \033[0m:$fail_count"
+echo -e -n "  \033[1;31mERROR  \033[0m:$error_count"
 echo -e -n "  \033[1;33mWARNING\033[0m:$warning_count"
-echo -e -n "  \033[1;33mWARNING\033[0m:$skip_count"
+echo -e -n "  \033[1;33mSKIPPED\033[0m:$skip_count"
 echo ""
 
 exit $(($fail_count + $error_count))
