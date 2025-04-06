@@ -14,4 +14,4 @@ jobs:
     - name: Simulations
       shell: bash
       run: |
-        ./ci.sh
+        ./.github/vivado_ci.sh
