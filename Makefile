@@ -117,8 +117,8 @@ build/done:
 # Define the 'compile' target to compile the source files
 .PHONY: compile
 compile: build
-	@cd build; xvlog -i ${ROOT}/include -sv ${LIB} | $(GREP_EW)
-	@cd build; xelab rv32imf_tb -s top | $(GREP_EW)
+	@cd build; xvlog -i ${ROOT}/include -sv ${LIB} -nolog | $(GREP_EW)
+	@cd build; xelab rv32imf_tb -s top -nolog | $(GREP_EW)
 	@echo "build done" > build/done
 
 # Define the 'run' target to run the tests
@@ -127,7 +127,7 @@ run: build/done
 	@echo -n "$(TEST)" > build/test
 	@echo -e "\033[1;33mRunning $(TEST)\033[0m"
 	@make -s test TEST=$(TEST)
-	@cd build; xsim top $(TESTPLUSARGS) -runall | $(GREP_EW)
+	@cd build; xsim top $(TESTPLUSARGS) -runall -nolog | $(GREP_EW)
 ifeq ($(DEBUG), 1)
 	@make -s readable
 endif
