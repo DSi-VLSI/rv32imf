@@ -11,7 +11,7 @@ jobs:
     runs-on: [make, vivado]
     steps:
     - uses: actions/checkout@v4
-    - name: Clean and Setup Vivado
+    - name: Simulations
       shell: bash
       run: |
         ./ci.sh
