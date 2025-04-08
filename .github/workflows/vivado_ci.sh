@@ -152,7 +152,7 @@ error_count=$(grep -r -i "ERROR" build/ci_logs/* | wc -l)
 echo ""
 echo -e "  \033[1;33mWARNING\033[0m"
 grep -r -i "WARNING" build/ci_logs/* | sed "s/.*\//    /g" | sed "s/\.log:.*/    /g"
-warning_count=$(grep -r "WARNING" build/ci_logs/* | wc -l)
+warning_count=$(grep -r -i "WARNING" build/ci_logs/* | wc -l)
 
 echo ""
 echo -e "  \033[1;33mSKIPPING\033[0m"
