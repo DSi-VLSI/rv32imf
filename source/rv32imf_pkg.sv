@@ -478,24 +478,25 @@ package rv32imf_pkg;
     CSR_DSCRATCH1 = 12'h7B3,
 
     // Machine cycle counter register
-    CSR_MCYCLE   = 12'hB00,
+    CSR_MCYCLE = 12'hB00,
+    // Machine time counter register
+    CSR_MTIME = 12'hB01,
     // Machine instruction retired counter register
     CSR_MINSTRET = 12'hB02,
-
     // Machine performance monitoring counter 3 register
-    CSR_MHPMCOUNTER3  = 12'hB03,
+    CSR_MHPMCOUNTER3 = 12'hB03,
     // Machine performance monitoring counter 4 register
-    CSR_MHPMCOUNTER4  = 12'hB04,
+    CSR_MHPMCOUNTER4 = 12'hB04,
     // Machine performance monitoring counter 5 register
-    CSR_MHPMCOUNTER5  = 12'hB05,
+    CSR_MHPMCOUNTER5 = 12'hB05,
     // Machine performance monitoring counter 6 register
-    CSR_MHPMCOUNTER6  = 12'hB06,
+    CSR_MHPMCOUNTER6 = 12'hB06,
     // Machine performance monitoring counter 7 register
-    CSR_MHPMCOUNTER7  = 12'hB07,
+    CSR_MHPMCOUNTER7 = 12'hB07,
     // Machine performance monitoring counter 8 register
-    CSR_MHPMCOUNTER8  = 12'hB08,
+    CSR_MHPMCOUNTER8 = 12'hB08,
     // Machine performance monitoring counter 9 register
-    CSR_MHPMCOUNTER9  = 12'hB09,
+    CSR_MHPMCOUNTER9 = 12'hB09,
     // Machine performance monitoring counter 10 register
     CSR_MHPMCOUNTER10 = 12'hB0A,
     // Machine performance monitoring counter 11 register
@@ -542,24 +543,25 @@ package rv32imf_pkg;
     CSR_MHPMCOUNTER31 = 12'hB1F,
 
     // Machine cycle counter high bits register
-    CSR_MCYCLEH   = 12'hB80,
+    CSR_MCYCLEH = 12'hB80,
+    // Machine instruction retired counter high bits register
+    CSR_MTIMEH = 12'hB81,
     // Machine instruction retired counter high bits register
     CSR_MINSTRETH = 12'hB82,
-
     // Machine performance monitoring counter 3 high bits register
-    CSR_MHPMCOUNTER3H  = 12'hB83,
+    CSR_MHPMCOUNTER3H = 12'hB83,
     // Machine performance monitoring counter 4 high bits register
-    CSR_MHPMCOUNTER4H  = 12'hB84,
+    CSR_MHPMCOUNTER4H = 12'hB84,
     // Machine performance monitoring counter 5 high bits register
-    CSR_MHPMCOUNTER5H  = 12'hB85,
+    CSR_MHPMCOUNTER5H = 12'hB85,
     // Machine performance monitoring counter 6 high bits register
-    CSR_MHPMCOUNTER6H  = 12'hB86,
+    CSR_MHPMCOUNTER6H = 12'hB86,
     // Machine performance monitoring counter 7 high bits register
-    CSR_MHPMCOUNTER7H  = 12'hB87,
+    CSR_MHPMCOUNTER7H = 12'hB87,
     // Machine performance monitoring counter 8 high bits register
-    CSR_MHPMCOUNTER8H  = 12'hB88,
+    CSR_MHPMCOUNTER8H = 12'hB88,
     // Machine performance monitoring counter 9 high bits register
-    CSR_MHPMCOUNTER9H  = 12'hB89,
+    CSR_MHPMCOUNTER9H = 12'hB89,
     // Machine performance monitoring counter 10 high bits register
     CSR_MHPMCOUNTER10H = 12'hB8A,
     // Machine performance monitoring counter 11 high bits register
@@ -607,9 +609,10 @@ package rv32imf_pkg;
 
     // Cycle counter register
     CSR_CYCLE   = 12'hC00,
+    // Time counter register
+    CSR_TIME    = 12'hC01,
     // Instruction retired counter register
     CSR_INSTRET = 12'hC02,
-
     // Hardware performance monitoring counter 3 register
     CSR_HPMCOUNTER3  = 12'hC03,
     // Hardware performance monitoring counter 4 register
@@ -670,24 +673,25 @@ package rv32imf_pkg;
     CSR_HPMCOUNTER31 = 12'hC1F,
 
     // Cycle counter high bits register
-    CSR_CYCLEH   = 12'hC80,
+    CSR_CYCLEH = 12'hC80,
+    // Time counter high bits register
+    CSR_TIMEH = 12'hC81,
     // Instruction retired counter high bits register
     CSR_INSTRETH = 12'hC82,
-
     // Hardware performance monitoring counter 3 high bits register
-    CSR_HPMCOUNTER3H  = 12'hC83,
+    CSR_HPMCOUNTER3H = 12'hC83,
     // Hardware performance monitoring counter 4 high bits register
-    CSR_HPMCOUNTER4H  = 12'hC84,
+    CSR_HPMCOUNTER4H = 12'hC84,
     // Hardware performance monitoring counter 5 high bits register
-    CSR_HPMCOUNTER5H  = 12'hC85,
+    CSR_HPMCOUNTER5H = 12'hC85,
     // Hardware performance monitoring counter 6 high bits register
-    CSR_HPMCOUNTER6H  = 12'hC86,
+    CSR_HPMCOUNTER6H = 12'hC86,
     // Hardware performance monitoring counter 7 high bits register
-    CSR_HPMCOUNTER7H  = 12'hC87,
+    CSR_HPMCOUNTER7H = 12'hC87,
     // Hardware performance monitoring counter 8 high bits register
-    CSR_HPMCOUNTER8H  = 12'hC88,
+    CSR_HPMCOUNTER8H = 12'hC88,
     // Hardware performance monitoring counter 9 high bits register
-    CSR_HPMCOUNTER9H  = 12'hC89,
+    CSR_HPMCOUNTER9H = 12'hC89,
     // Hardware performance monitoring counter 10 high bits register
     CSR_HPMCOUNTER10H = 12'hC8A,
     // Hardware performance monitoring counter 11 high bits register

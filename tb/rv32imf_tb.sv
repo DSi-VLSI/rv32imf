@@ -47,6 +47,12 @@ module rv32imf_tb;
   logic        irq_ack;
   logic [ 4:0] irq_id;
 
+  bit [63:0] time_i;
+
+  always #100ns begin
+    time_i <= time_i + 1;
+  end
+
   // Instantiate the DUT
   rv32imf u_rv32imf (
       .clk_i              (clk),
@@ -70,7 +76,8 @@ module rv32imf_tb;
       .data_rdata_i       (data_rdata),
       .irq_i              (irq),
       .irq_ack_o          (irq_ack),
-      .irq_id_o           (irq_id)
+      .irq_id_o           (irq_id),
+      .time_i             (time_i)
   );
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +108,7 @@ module rv32imf_tb;
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   // Declare dictionary of symbols
-  int sym[string];
+  int sym [string];
 
   // Coverage file pointer
   int cfp;
@@ -302,10 +309,20 @@ module rv32imf_tb;
 
   // Task to wait for the test to exit and display the exit code
   task static wait_exit();
-    do begin
-      @(posedge clk);
-    end while (!(data_addr === sym["tohost"] && data_we === '1 && data_be === 'hf &&
-                 data_req === '1 && data_gnt === '1));
+    int exit_code;
+    exit_code = '1;
+    fork
+      begin
+        do begin
+          @(posedge clk);
+        end while (!(data_addr === sym["tohost"] && data_we === '1 && data_be === 'hf &&
+                     data_req === '1 && data_gnt === '1));
+        exit_code = data_wdata;
+      end
+      begin
+        #1ms;
+      end
+    join_any
     $display("\033[0;35mEXIT CODE      : 0x%08x\033[0m", data_wdata);
     if (data_wdata == 0) $display("\033[1;32m************** TEST PASSED **************\033[0m");
     else $display("\033[1;31m************** TEST FAILED **************\033[0m");
@@ -393,7 +410,7 @@ module rv32imf_tb;
       32'b110100000000xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FCVT_S_W\n");
       32'b110100000001xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FCVT_S_WU\n");
       32'b111100000000xxxxx000xxxxx1010011: $fwrite(cfp, "INSTR_COV: FMV_W_X\n");
-      default:                              $fwrite(cfp, "INSTR_COV: UNKNOWN 0x%08x\n", `ID_STAGE.instr);
+      default: $fwrite(cfp, "INSTR_COV: UNKNOWN 0x%08x\n", `ID_STAGE.instr);
     endcase
   endfunction
 
@@ -402,7 +419,7 @@ module rv32imf_tb;
     int running_pc;
     running_pc = 0;
     fork
-      forever begin // instruction coverage
+      forever begin  // instruction coverage
         fork
           @(negedge `IF_STAGE.clk);
           @(negedge `ID_STAGE.clk);
@@ -457,7 +474,7 @@ module rv32imf_tb;
       // Dump trace
       dump_trace();
     end
-    
+
     // Set the coverage file name
     cfp = $fopen("prog.cov", "w");
     if (cfp == 0) begin

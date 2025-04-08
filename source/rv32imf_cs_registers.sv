@@ -90,7 +90,9 @@ module rv32imf_cs_registers
     input logic apu_typeconflict_i,        // APU type conflict event
     input logic apu_contention_i,          // APU contention event
     input logic apu_dep_i,                 // APU dependency event
-    input logic apu_wb_i                   // APU writeback event
+    input logic apu_wb_i,                  // APU writeback event
+
+    input logic [63:0] time_i  // Time input for cycle counting
 );
 
   // Number of hardware performance monitor events
@@ -224,21 +226,21 @@ module rv32imf_cs_registers
         csr_mie_wdata = csr_wdata_i;
         csr_mie_we    = 1'b0; // No write during read
       end
-      default: ;
     endcase
   end
 
   // Bypass MIE
   assign mie_bypass_o = ((csr_addr_i == CSR_MIE) && csr_mie_we) ? csr_mie_wdata & IRQ_MASK : mie_q;
 
-  genvar j;  // Generate variable for loops
-
   always_comb begin  // Logic for reading CSR registers
     case (csr_addr_i)
 
+      CSR_TIME, CSR_MTIME: csr_rdata_int = time_i[31:0];  // Read TIME or MTIME
+      CSR_TIMEH, CSR_MTIMEH: csr_rdata_int = time_i[63:32];  // Read TIMEH or MTIMEH
+
       CSR_FFLAGS: csr_rdata_int = {27'b0, fflags_q};  // Read FFLAGS
-      CSR_FRM:    csr_rdata_int = {29'b0, frm_q};  // Read FRM
-      CSR_FCSR:   csr_rdata_int = {24'b0, frm_q, fflags_q};  // Read FCSR
+      CSR_FRM: csr_rdata_int = {29'b0, frm_q};  // Read FRM
+      CSR_FCSR: csr_rdata_int = {24'b0, frm_q, fflags_q};  // Read FCSR
 
       CSR_MSTATUS:  // Read MSTATUS
       csr_rdata_int = {
@@ -349,20 +351,7 @@ module rv32imf_cs_registers
       CSR_MHPMEVENT24, CSR_MHPMEVENT25, CSR_MHPMEVENT26, CSR_MHPMEVENT27,
       CSR_MHPMEVENT28, CSR_MHPMEVENT29, CSR_MHPMEVENT30, CSR_MHPMEVENT31:
       csr_rdata_int = mhpmevent_q[csr_addr_i[4:0]];  // Read MHPM event
-
-      CSR_LPSTART0: csr_rdata_int = '0;  // Read LPSTART0 (not implemented)
-      CSR_LPEND0:   csr_rdata_int = '0;  // Read LPEND0 (not implemented)
-      CSR_LPCOUNT0: csr_rdata_int = '0;  // Read LPCOUNT0 (not implemented)
-      CSR_LPSTART1: csr_rdata_int = '0;  // Read LPSTART1 (not implemented)
-      CSR_LPEND1:   csr_rdata_int = '0;  // Read LPEND1 (not implemented)
-      CSR_LPCOUNT1: csr_rdata_int = '0;  // Read LPCOUNT1 (not implemented)
-
-      CSR_UHARTID: csr_rdata_int = '0;  // Read UHARTID (not implemented)
-
-      CSR_PRIVLV: csr_rdata_int = '0;  // Read PRIVLV (not implemented)
-
-      CSR_ZFINX: csr_rdata_int = '0;  // Read ZFINX (not implemented)
-      default:   csr_rdata_int = '0;  // Default read value
+      default: csr_rdata_int = '0;  // Default read value
     endcase
   end
 
@@ -397,140 +386,135 @@ module rv32imf_cs_registers
     mtvec_mode_n = mtvec_mode_q;
     utvec_mode_n = '0;
 
-    case (csr_addr_i)  // Update next state based on CSR address
-      default: ;
-      CSR_FFLAGS:  // Write to FFLAGS
-      if (csr_we_int) begin
-        fflags_n = csr_wdata_int[C_FFLAG-1:0];
-        fcsr_update = 1'b1;
-      end
-      CSR_FRM:  // Write to FRM
-      if (csr_we_int) begin
-        frm_n = csr_wdata_int[C_RM-1:0];
-        fcsr_update = 1'b1;
-      end
-      CSR_FCSR:  // Write to FCSR
-      if (csr_we_int) begin
-        fflags_n = csr_wdata_int[C_FFLAG-1:0];
-        frm_n    = csr_wdata_int[C_RM+C_FFLAG-1:C_FFLAG];
-        fcsr_update = 1'b1;
-      end
+    if (csr_we_int) begin
+      case (csr_addr_i)  // Update next state based on CSR address
 
-      CSR_MSTATUS:  // Write to MSTATUS
-      if (csr_we_int) begin
-        mstatus_n = '{
-            uie: csr_wdata_int[MstatusUieBit],
-            mie: csr_wdata_int[MstatusMieBit],
-            upie: csr_wdata_int[MstatusUpieBit],
-            mpie: csr_wdata_int[MstatusMpieBit],
-            mpp: priv_lvl_t'(csr_wdata_int[MstatusMppBitHigh:MstatusMppBitLow]),
-            mprv: csr_wdata_int[MstatusMprvBit]
-        };
-        mstatus_we_int = 1'b1;
-        mstatus_fs_n = fs_t'(csr_wdata_int[MstatusFsBitHigh:MstatusFsBitLow]);
-      end
+        CSR_FFLAGS:  // Write to FFLAGS
+        begin
+          fflags_n = csr_wdata_int[C_FFLAG-1:0];
+          fcsr_update = 1'b1;
+        end
 
-      CSR_MIE:  // Write to MIE
-      if (csr_we_int) begin
-        mie_n = csr_wdata_int & IRQ_MASK;
-      end
+        CSR_FRM:  // Write to FRM
+        begin
+          frm_n = csr_wdata_int[C_RM-1:0];
+          fcsr_update = 1'b1;
+        end
 
-      CSR_MTVEC:  // Write to MTVEC
-      if (csr_we_int) begin
-        mtvec_n      = csr_wdata_int[31:8];
-        mtvec_mode_n = {1'b0, csr_wdata_int[0]};
-      end
+        CSR_FCSR:  // Write to FCSR
+        begin
+          fflags_n = csr_wdata_int[C_FFLAG-1:0];
+          frm_n    = csr_wdata_int[C_RM+C_FFLAG-1:C_FFLAG];
+          fcsr_update = 1'b1;
+        end
 
-      CSR_MSCRATCH:  // Write to MSCRATCH
-      if (csr_we_int) begin
-        mscratch_n = csr_wdata_int;
-      end
+        CSR_MSTATUS:  // Write to MSTATUS
+        begin
+          mstatus_n = '{
+              uie: csr_wdata_int[MstatusUieBit],
+              mie: csr_wdata_int[MstatusMieBit],
+              upie: csr_wdata_int[MstatusUpieBit],
+              mpie: csr_wdata_int[MstatusMpieBit],
+              mpp: priv_lvl_t'(csr_wdata_int[MstatusMppBitHigh:MstatusMppBitLow]),
+              mprv: csr_wdata_int[MstatusMprvBit]
+          };
+          mstatus_we_int = 1'b1;
+          mstatus_fs_n = fs_t'(csr_wdata_int[MstatusFsBitHigh:MstatusFsBitLow]);
+        end
 
-      CSR_MEPC:  // Write to MEPC
-      if (csr_we_int) begin
-        mepc_n = csr_wdata_int & ~32'd1;
-      end
+        CSR_MIE:  // Write to MIE
+        begin
+          mie_n = csr_wdata_int & IRQ_MASK;
+        end
 
-      CSR_MCAUSE:
-      if (csr_we_int) mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};  // Write to MCAUSE
+        CSR_MTVEC:  // Write to MTVEC
+        begin
+          mtvec_n      = csr_wdata_int[31:8];
+          mtvec_mode_n = {1'b0, csr_wdata_int[0]};
+        end
 
-      CSR_DCSR:  // Write to DCSR
-      if (csr_we_int) begin
-        dcsr_n.ebreakm   = csr_wdata_int[15];
-        dcsr_n.ebreaks   = 1'b0;
-        dcsr_n.ebreaku   = 1'b0;
-        dcsr_n.stepie    = csr_wdata_int[11];
-        dcsr_n.stopcount = 1'b0;
-        dcsr_n.stoptime  = 1'b0;
-        dcsr_n.mprven    = 1'b0;
-        dcsr_n.step      = csr_wdata_int[2];
-        dcsr_n.prv       = PRIV_LVL_M;
-      end
+        CSR_MSCRATCH:  // Write to MSCRATCH
+        begin
+          mscratch_n = csr_wdata_int;
+        end
 
-      CSR_DPC:  // Write to DPC
-      if (csr_we_int) begin
-        depc_n = csr_wdata_int & ~32'd1;
-      end
+        CSR_MEPC:  // Write to MEPC
+        begin
+          mepc_n = csr_wdata_int & ~32'd1;
+        end
 
-      CSR_DSCRATCH0:  // Write to DSCRATCH0
-      if (csr_we_int) begin
-        dscratch0_n = csr_wdata_int;
-      end
+        CSR_MCAUSE: // Write to MCAUSE
+        begin
+          mcause_n = {csr_wdata_int[31], csr_wdata_int[4:0]};
+        end
 
-      CSR_DSCRATCH1:  // Write to DSCRATCH1
-      if (csr_we_int) begin
-        dscratch1_n = csr_wdata_int;
-      end
+        CSR_DCSR:  // Write to DCSR
+        begin
+          dcsr_n.ebreakm   = csr_wdata_int[15];
+          dcsr_n.ebreaks   = 1'b0;
+          dcsr_n.ebreaku   = 1'b0;
+          dcsr_n.stepie    = csr_wdata_int[11];
+          dcsr_n.stopcount = 1'b0;
+          dcsr_n.stoptime  = 1'b0;
+          dcsr_n.mprven    = 1'b0;
+          dcsr_n.step      = csr_wdata_int[2];
+          dcsr_n.prv       = PRIV_LVL_M;
+        end
 
-    endcase
+        CSR_DPC:  // Write to DPC
+        begin
+          depc_n = csr_wdata_int & ~32'd1;
+        end
+
+        CSR_DSCRATCH0:  // Write to DSCRATCH0
+        begin
+          dscratch0_n = csr_wdata_int;
+        end
+
+        CSR_DSCRATCH1:  // Write to DSCRATCH1
+        begin
+          dscratch1_n = csr_wdata_int;
+        end
+
+      endcase
+    end
 
     if (fflags_we_i) begin  // Update FFLAGS if write enable is asserted
       fflags_n = fflags_i | fflags_q;
     end
 
     if ((fregs_we_i && !(mstatus_we_int && mstatus_fs_n != FS_DIRTY))
-      || fflags_we_i || fcsr_update) begin
+        || fflags_we_i || fcsr_update)
+    begin
       mstatus_fs_n = FS_DIRTY;  // Mark floating-point state as dirty
     end
 
-    unique case (1'b1)  // Handle CSR saves
+    if (csr_save_cause_i) begin  // Save CSRs on exception
+      if (csr_save_if_i) exception_pc = pc_if_i;
+      else if (csr_save_id_i) exception_pc = pc_id_i;
+      else if (csr_save_ex_i) exception_pc = pc_ex_i;
 
-      csr_save_cause_i: begin  // Save CSRs on exception
-        unique case (1'b1)
-          csr_save_if_i: exception_pc = pc_if_i;
-          csr_save_id_i: exception_pc = pc_id_i;
-          csr_save_ex_i: exception_pc = pc_ex_i;
-          default: ;
-        endcase
-
-        if (debug_csr_save_i) begin  // Save for debug mode
-          dcsr_n.prv   = PRIV_LVL_M;
-          dcsr_n.cause = debug_cause_i;
-          depc_n       = exception_pc;
-        end else begin  // Save for normal exception
-          priv_lvl_n     = PRIV_LVL_M;
-          mstatus_n.mpie = mstatus_q.mie;
-          mstatus_n.mie  = 1'b0;
-          mstatus_n.mpp  = PRIV_LVL_M;
-          mepc_n         = exception_pc;
-          mcause_n       = csr_cause_i;
-        end
-      end
-
-      csr_restore_mret_i: begin  // Restore CSRs on MRET
-        mstatus_n.mie  = mstatus_q.mpie;
-        priv_lvl_n    = PRIV_LVL_M;
-        mstatus_n.mpie = 1'b1;
+      if (debug_csr_save_i) begin  // Save for debug mode
+        dcsr_n.prv   = PRIV_LVL_M;
+        dcsr_n.cause = debug_cause_i;
+        depc_n       = exception_pc;
+      end else begin  // Save for normal exception
+        priv_lvl_n     = PRIV_LVL_M;
+        mstatus_n.mpie = mstatus_q.mie;
+        mstatus_n.mie  = 1'b0;
         mstatus_n.mpp  = PRIV_LVL_M;
+        mepc_n         = exception_pc;
+        mcause_n       = csr_cause_i;
       end
+    end else if (csr_restore_mret_i) begin  // Restore CSRs on MRET
+      mstatus_n.mie  = mstatus_q.mpie;
+      priv_lvl_n    = PRIV_LVL_M;
+      mstatus_n.mpie = 1'b1;
+      mstatus_n.mpp  = PRIV_LVL_M;
+    end else if (csr_restore_dret_i) begin  // Restore CSRs on DRET
+      priv_lvl_n = dcsr_q.prv;
+    end
 
-      csr_restore_dret_i: begin  // Restore CSRs on DRET
-
-        priv_lvl_n = dcsr_q.prv;
-      end
-
-      default: ;
-    endcase
   end
 
   always_comb begin  // Logic for internal CSR write enable
@@ -538,9 +522,8 @@ module rv32imf_cs_registers
     csr_we_int    = 1'b1;
 
     case (csr_op_i)
-      default: ;
       CSR_OP_WRITE: csr_wdata_int = csr_wdata_i;  // Write operation
-      CSR_OP_SET: csr_wdata_int = csr_wdata_i | csr_rdata_o;  // Set bits operation
+      CSR_OP_SET:   csr_wdata_int = csr_wdata_i | csr_rdata_o;  // Set bits operation
       CSR_OP_CLEAR: csr_wdata_int = (~csr_wdata_i) & csr_rdata_o;  // Clear bits operation
 
       CSR_OP_READ: begin  // Read operation
@@ -721,40 +704,37 @@ module rv32imf_cs_registers
   assign mcountinhibit_we = csr_we_int & (csr_addr_i == CSR_MCOUNTINHIBIT);  // Write enable
   assign mhpmevent_we = csr_we_int & ((csr_addr_i == CSR_MHPMEVENT3) ||  // Write enable
       (csr_addr_i == CSR_MHPMEVENT4  ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT5  ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT6  ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT7  ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT8  ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT9  ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT10 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT11 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT12 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT13 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT14 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT15 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT16 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT17 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT18 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT19 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT20 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT21 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT22 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT23 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT24 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT25 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT26 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT27 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT28 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT29 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT30 ) ||
-                                            (csr_addr_i == CSR_MHPMEVENT31 ) );
+                                      (csr_addr_i == CSR_MHPMEVENT5  ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT6  ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT7  ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT8  ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT9  ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT10 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT11 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT12 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT13 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT14 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT15 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT16 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT17 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT18 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT19 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT20 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT21 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT22 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT23 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT24 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT25 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT26 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT27 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT28 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT29 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT30 ) ||
+                                      (csr_addr_i == CSR_MHPMEVENT31 ) );
 
-  genvar incr_gidx;
-  generate
-    for (incr_gidx = 0; incr_gidx < 32; incr_gidx++) begin : gen_mhpmcounter_increment
-      assign mhpmcounter_increment[incr_gidx] = mhpmcounter_q[incr_gidx] + 1;  // Increment logic
-    end
-  endgenerate
+  for (genvar incr_gidx = 0; incr_gidx < 32; incr_gidx++) begin : gen_mhpmcounter_increment
+    assign mhpmcounter_increment[incr_gidx] = mhpmcounter_q[incr_gidx] + 1;  // Increment logic
+  end
 
   always_comb begin  // Next state logic for MCOUNTEREN, MCOUNTINHIBIT, MHPMEVENT
     mcounteren_n    = mcounteren_q;
@@ -764,99 +744,84 @@ module rv32imf_cs_registers
     if (mhpmevent_we) mhpmevent_n[csr_addr_i[4:0]] = csr_wdata_int;  // Update MHPMEVENT
   end
 
-  genvar wcnt_gidx;
-  generate
-    for (wcnt_gidx = 0; wcnt_gidx < 32; wcnt_gidx++) begin : gen_mhpmcounter_write
+  for (genvar wcnt_gidx = 0; wcnt_gidx < 32; wcnt_gidx++) begin : gen_mhpmcounter_write
 
-      // Write lower
-      assign mhpmcounter_write_lower[wcnt_gidx] = csr_we_int &&
-                                                 (csr_addr_i == (CSR_MCYCLE + wcnt_gidx));
+    // Write lower
+    assign mhpmcounter_write_lower[wcnt_gidx] = csr_we_int &&
+           (csr_addr_i == (CSR_MCYCLE + wcnt_gidx));
 
-      // Write upper
-      assign mhpmcounter_write_upper[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
-          csr_we_int && (csr_addr_i == (CSR_MCYCLEH + wcnt_gidx)) && (MHPMCOUNTER_WIDTH == 64);
+    // Write upper
+    assign mhpmcounter_write_upper[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
+           csr_we_int && (csr_addr_i == (CSR_MCYCLEH + wcnt_gidx)) && (MHPMCOUNTER_WIDTH == 64);
 
-      if (wcnt_gidx == 0) begin : gen_mhpmcounter_mcycle  // Increment for MCYCLE
+    if (wcnt_gidx == 0) begin : gen_mhpmcounter_mcycle  // Increment for MCYCLE
 
-        assign mhpmcounter_write_increment[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
-                                                            !mhpmcounter_write_upper[wcnt_gidx] &&
-                                                            !mcountinhibit_q[wcnt_gidx];
-      end else if (wcnt_gidx == 2) begin : gen_mhpmcounter_minstret  // Increment for MINSTRET
+      assign mhpmcounter_write_increment[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
+             !mhpmcounter_write_upper[wcnt_gidx] &&
+             !mcountinhibit_q[wcnt_gidx];
+    end else if (wcnt_gidx == 2) begin : gen_mhpmcounter_minstret  // Increment for MINSTRET
 
-        assign mhpmcounter_write_increment[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
-                                                            !mhpmcounter_write_upper[wcnt_gidx] &&
-                                                            !mcountinhibit_q[wcnt_gidx] &&
-                                                            hpm_events[1];
-        // Increment for MHPM counters
-      end else if ((wcnt_gidx > 2) && (wcnt_gidx < (4))) begin : gen_mhpmcounter
+      assign mhpmcounter_write_increment[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
+             !mhpmcounter_write_upper[wcnt_gidx] &&
+             !mcountinhibit_q[wcnt_gidx] &&
+             hpm_events[1];
+      // Increment for MHPM counters
+    end else if ((wcnt_gidx > 2) && (wcnt_gidx < (4))) begin : gen_mhpmcounter
 
-        assign mhpmcounter_write_increment[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
-              !mhpmcounter_write_upper[wcnt_gidx] && !mcountinhibit_q[wcnt_gidx] &&
-              |(hpm_events & mhpmevent_q[wcnt_gidx][HmpEvents-1:0]);
-      end else begin : gen_mhpmcounter_not_implemented  // Not implemented
-        assign mhpmcounter_write_increment[wcnt_gidx] = 1'b0;
-      end
+      assign mhpmcounter_write_increment[wcnt_gidx] = !mhpmcounter_write_lower[wcnt_gidx] &&
+             !mhpmcounter_write_upper[wcnt_gidx] && !mcountinhibit_q[wcnt_gidx] &&
+             |(hpm_events & mhpmevent_q[wcnt_gidx][HmpEvents-1:0]);
+    end else begin : gen_mhpmcounter_not_implemented  // Not implemented
+      assign mhpmcounter_write_increment[wcnt_gidx] = 1'b0;
     end
-  endgenerate
+  end
 
-  genvar cnt_gidx;
-  generate
-    for (cnt_gidx = 0; cnt_gidx < 32; cnt_gidx++) begin : gen_mhpmcounter
+  for (genvar cnt_gidx = 0; cnt_gidx < 32; cnt_gidx++) begin : gen_mhpmcounter
 
-      if ((cnt_gidx == 1) || (cnt_gidx >= (4))) begin : gen_non_implemented  // Not implemented
-        assign mhpmcounter_q[cnt_gidx] = 'b0;
-      end else begin : gen_implemented  // Implemented counters
-        always_ff @(posedge clk, negedge rst_n)
-          if (!rst_n) begin
-            mhpmcounter_q[cnt_gidx] <= 'b0;
-          end else begin
-            if (mhpmcounter_write_lower[cnt_gidx]) begin
-              mhpmcounter_q[cnt_gidx][31:0] <= csr_wdata_int;
-            end else if (mhpmcounter_write_upper[cnt_gidx]) begin
-              mhpmcounter_q[cnt_gidx][63:32] <= csr_wdata_int;
-            end else if (mhpmcounter_write_increment[cnt_gidx]) begin
-              mhpmcounter_q[cnt_gidx] <= mhpmcounter_increment[cnt_gidx];
-            end
+    if ((cnt_gidx == 1) || (cnt_gidx >= (4))) begin : gen_non_implemented  // Not implemented
+      assign mhpmcounter_q[cnt_gidx] = 'b0;
+    end else begin : gen_implemented  // Implemented counters
+      always_ff @(posedge clk, negedge rst_n)
+        if (!rst_n) begin
+          mhpmcounter_q[cnt_gidx] <= 'b0;
+        end else begin
+          if (mhpmcounter_write_lower[cnt_gidx]) begin
+            mhpmcounter_q[cnt_gidx][31:0] <= csr_wdata_int;
+          end else if (mhpmcounter_write_upper[cnt_gidx]) begin
+            mhpmcounter_q[cnt_gidx][63:32] <= csr_wdata_int;
+          end else if (mhpmcounter_write_increment[cnt_gidx]) begin
+            mhpmcounter_q[cnt_gidx] <= mhpmcounter_increment[cnt_gidx];
           end
-      end
-    end
-  endgenerate
-
-  genvar evt_gidx;
-  generate
-    for (evt_gidx = 0; evt_gidx < 32; evt_gidx++) begin : gen_mhpmevent
-
-      if ((evt_gidx < 3) || (evt_gidx >= (4))) begin : gen_non_implemented  // Not implemented
-        assign mhpmevent_q[evt_gidx] = 'b0;
-      end else begin : gen_implemented  // Implemented events
-        if (HmpEvents < 32) begin : gen_tie_off  // Tie off unused bits
-          assign mhpmevent_q[evt_gidx][31:HmpEvents] = 'b0;
         end
-        always_ff @(posedge clk, negedge rst_n)
-          if (!rst_n) mhpmevent_q[evt_gidx][HmpEvents-1:0] <= 'b0;
-          else mhpmevent_q[evt_gidx][HmpEvents-1:0] <= mhpmevent_n[evt_gidx][HmpEvents-1:0];
-      end
     end
-  endgenerate
+  end
 
-  genvar en_gidx;
-  generate
-    for (en_gidx = 0; en_gidx < 32; en_gidx++) begin : gen_mcounteren  // Tie off MCOUNTEREN
-      assign mcounteren_q[en_gidx] = 'b0;
-    end
-  endgenerate
+  for (genvar evt_gidx = 0; evt_gidx < 32; evt_gidx++) begin : gen_mhpmevent
 
-  genvar inh_gidx;
-  generate
-    for (inh_gidx = 0; inh_gidx < 32; inh_gidx++) begin : gen_mcountinhibit
-      if ((inh_gidx == 1) || (inh_gidx >= (4))) begin : gen_non_implemented  // Not implemented
-        assign mcountinhibit_q[inh_gidx] = 'b0;
-      end else begin : gen_implemented  // Implemented inhibit bits
-        always_ff @(posedge clk, negedge rst_n)
-          if (!rst_n) mcountinhibit_q[inh_gidx] <= 'b1;
-          else mcountinhibit_q[inh_gidx] <= mcountinhibit_n[inh_gidx];
+    if ((evt_gidx < 3) || (evt_gidx >= (4))) begin : gen_non_implemented  // Not implemented
+      assign mhpmevent_q[evt_gidx] = 'b0;
+    end else begin : gen_implemented  // Implemented events
+      if (HmpEvents < 32) begin : gen_tie_off  // Tie off unused bits
+        assign mhpmevent_q[evt_gidx][31:HmpEvents] = 'b0;
       end
+      always_ff @(posedge clk, negedge rst_n)
+        if (!rst_n) mhpmevent_q[evt_gidx][HmpEvents-1:0] <= 'b0;
+        else mhpmevent_q[evt_gidx][HmpEvents-1:0] <= mhpmevent_n[evt_gidx][HmpEvents-1:0];
     end
-  endgenerate
+  end
+
+  for (genvar en_gidx = 0; en_gidx < 32; en_gidx++) begin : gen_mcounteren  // Tie off MCOUNTEREN
+    assign mcounteren_q[en_gidx] = 'b0;
+  end
+
+  for (genvar inh_gidx = 0; inh_gidx < 32; inh_gidx++) begin : gen_mcountinhibit
+    if ((inh_gidx == 1) || (inh_gidx >= (4))) begin : gen_non_implemented  // Not implemented
+      assign mcountinhibit_q[inh_gidx] = 'b0;
+    end else begin : gen_implemented  // Implemented inhibit bits
+      always_ff @(posedge clk, negedge rst_n)
+        if (!rst_n) mcountinhibit_q[inh_gidx] <= 'b1;
+        else mcountinhibit_q[inh_gidx] <= mcountinhibit_n[inh_gidx];
+    end
+  end
 
 endmodule
