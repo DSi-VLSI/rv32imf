@@ -20,95 +20,6 @@ module rv32imf_tb;
   `define FPR `REGFILE.mem_fp
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
-  // TYPEDEFINES
-  //////////////////////////////////////////////////////////////////////////////////////////////////
-
-  // Define a type for the instruction set architecture (ISA) functions
-  typedef enum int {
-    INVALID,
-    LUI,
-    AUIPC,
-    JAL,
-    JALR,
-    BEQ,
-    BNE,
-    BLT,
-    BGE,
-    BLTU,
-    BGEU,
-    LB,
-    LH,
-    LW,
-    LBU,
-    LHU,
-    SB,
-    SH,
-    SW,
-    ADDI,
-    SLTI,
-    SLTIU,
-    XORI,
-    ORI,
-    ANDI,
-    SLLI,
-    SRLI,
-    SRAI,
-    ADD,
-    SUB,
-    SLL,
-    SLT,
-    SLTU,
-    XOR,
-    SRL,
-    SRA,
-    OR,
-    AND,
-    FENCE,
-    ECALL,
-    EBREAK,
-    CSRRW,
-    CSRRS,
-    CSRRC,
-    CSRRWI,
-    CSRRSI,
-    CSRRCI,
-    MUL,
-    MULH,
-    MULHSU,
-    MULHU,
-    DIV,
-    DIVU,
-    REM,
-    REMU,
-    FLW,
-    FSW,
-    FMADD_S,
-    FMSUB_S,
-    FNMSUB_S,
-    FNMADD_S,
-    FADD_S,
-    FSUB_S,
-    FMUL_S,
-    FDIV_S,
-    FSQRT_S,
-    FSGNJ_S,
-    FSGNJN_S,
-    FSGNJX_S,
-    FMIN_S,
-    FMAX_S,
-    FCVT_W_S,
-    FCVT_WU_S,
-    FMV_X_W,
-    FEQ_S,
-    FLT_S,
-    FLE_S,
-    FCLASS_S,
-    FCVT_S_W,
-    FCVT_S_WU,
-    FMV_W_X
-  } func_t;
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////
   // DUT Instantiation
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -192,97 +103,13 @@ module rv32imf_tb;
   // Declare dictionary of symbols
   int sym[string];
 
+  // Coverage file pointer
+  int cfp;
+
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Methods
   //////////////////////////////////////////////////////////////////////////////////////////////////
-
-  // Function to decode the instruction and return the corresponding function type
-  function automatic func_t decode(input logic [31:0] instr);
-    casex (instr)
-      default:                              return INVALID;
-      32'bxxxxxxxxxxxxxxxxxxxxxxxxx0110111: return LUI;
-      32'bxxxxxxxxxxxxxxxxxxxxxxxxx0010111: return AUIPC;
-      32'bxxxxxxxxxxxxxxxxxxxxxxxxx1101111: return JAL;
-      32'bxxxxxxxxxxxxxxxxx000xxxxx1100111: return JALR;
-      32'bxxxxxxxxxxxxxxxxx000xxxxx1100011: return BEQ;
-      32'bxxxxxxxxxxxxxxxxx001xxxxx1100011: return BNE;
-      32'bxxxxxxxxxxxxxxxxx100xxxxx1100011: return BLT;
-      32'bxxxxxxxxxxxxxxxxx101xxxxx1100011: return BGE;
-      32'bxxxxxxxxxxxxxxxxx110xxxxx1100011: return BLTU;
-      32'bxxxxxxxxxxxxxxxxx111xxxxx1100011: return BGEU;
-      32'bxxxxxxxxxxxxxxxxx000xxxxx0000011: return LB;
-      32'bxxxxxxxxxxxxxxxxx001xxxxx0000011: return LH;
-      32'bxxxxxxxxxxxxxxxxx010xxxxx0000011: return LW;
-      32'bxxxxxxxxxxxxxxxxx100xxxxx0000011: return LBU;
-      32'bxxxxxxxxxxxxxxxxx101xxxxx0000011: return LHU;
-      32'bxxxxxxxxxxxxxxxxx000xxxxx0100011: return SB;
-      32'bxxxxxxxxxxxxxxxxx001xxxxx0100011: return SH;
-      32'bxxxxxxxxxxxxxxxxx010xxxxx0100011: return SW;
-      32'bxxxxxxxxxxxxxxxxx000xxxxx0010011: return ADDI;
-      32'bxxxxxxxxxxxxxxxxx010xxxxx0010011: return SLTI;
-      32'bxxxxxxxxxxxxxxxxx011xxxxx0010011: return SLTIU;
-      32'bxxxxxxxxxxxxxxxxx100xxxxx0010011: return XORI;
-      32'bxxxxxxxxxxxxxxxxx110xxxxx0010011: return ORI;
-      32'bxxxxxxxxxxxxxxxxx111xxxxx0010011: return ANDI;
-      32'b0000000xxxxxxxxxx001xxxxx0010011: return SLLI;
-      32'b0000000xxxxxxxxxx101xxxxx0010011: return SRLI;
-      32'b0100000xxxxxxxxxx101xxxxx0010011: return SRAI;
-      32'b0000000xxxxxxxxxx000xxxxx0110011: return ADD;
-      32'b0100000xxxxxxxxxx000xxxxx0110011: return SUB;
-      32'b0000000xxxxxxxxxx001xxxxx0110011: return SLL;
-      32'b0000000xxxxxxxxxx010xxxxx0110011: return SLT;
-      32'b0000000xxxxxxxxxx011xxxxx0110011: return SLTU;
-      32'b0000000xxxxxxxxxx100xxxxx0110011: return XOR;
-      32'b0000000xxxxxxxxxx101xxxxx0110011: return SRL;
-      32'b0100000xxxxxxxxxx101xxxxx0110011: return SRA;
-      32'b0000000xxxxxxxxxx110xxxxx0110011: return OR;
-      32'b0000000xxxxxxxxxx111xxxxx0110011: return AND;
-      32'bxxxxxxxxxxxxxxxxx000xxxxx0001111: return FENCE;
-      32'b00000000000000000000000001110011: return ECALL;
-      32'b00000000000100000000000001110011: return EBREAK;
-      32'bxxxxxxxxxxxxxxxxx001xxxxx1110011: return CSRRW;
-      32'bxxxxxxxxxxxxxxxxx010xxxxx1110011: return CSRRS;
-      32'bxxxxxxxxxxxxxxxxx011xxxxx1110011: return CSRRC;
-      32'bxxxxxxxxxxxxxxxxx101xxxxx1110011: return CSRRWI;
-      32'bxxxxxxxxxxxxxxxxx110xxxxx1110011: return CSRRSI;
-      32'bxxxxxxxxxxxxxxxxx111xxxxx1110011: return CSRRCI;
-      32'b0000001xxxxxxxxxx000xxxxx0110011: return MUL;
-      32'b0000001xxxxxxxxxx001xxxxx0110011: return MULH;
-      32'b0000001xxxxxxxxxx010xxxxx0110011: return MULHSU;
-      32'b0000001xxxxxxxxxx011xxxxx0110011: return MULHU;
-      32'b0000001xxxxxxxxxx100xxxxx0110011: return DIV;
-      32'b0000001xxxxxxxxxx101xxxxx0110011: return DIVU;
-      32'b0000001xxxxxxxxxx110xxxxx0110011: return REM;
-      32'b0000001xxxxxxxxxx111xxxxx0110011: return REMU;
-      32'bxxxxxxxxxxxxxxxxx010xxxxx0000111: return FLW;
-      32'bxxxxxxxxxxxxxxxxx010xxxxx0100111: return FSW;
-      32'bxxxxx00xxxxxxxxxxxxxxxxxx1000011: return FMADD_S;
-      32'bxxxxx00xxxxxxxxxxxxxxxxxx1000111: return FMSUB_S;
-      32'bxxxxx00xxxxxxxxxxxxxxxxxx1001011: return FNMSUB_S;
-      32'bxxxxx00xxxxxxxxxxxxxxxxxx1001111: return FNMADD_S;
-      32'b0000000xxxxxxxxxxxxxxxxxx1010011: return FADD_S;
-      32'b0000100xxxxxxxxxxxxxxxxxx1010011: return FSUB_S;
-      32'b0001000xxxxxxxxxxxxxxxxxx1010011: return FMUL_S;
-      32'b0001100xxxxxxxxxxxxxxxxxx1010011: return FDIV_S;
-      32'b010110000000xxxxxxxxxxxxx1010011: return FSQRT_S;
-      32'b0010000xxxxxxxxxx000xxxxx1010011: return FSGNJ_S;
-      32'b0010000xxxxxxxxxx001xxxxx1010011: return FSGNJN_S;
-      32'b0010000xxxxxxxxxx010xxxxx1010011: return FSGNJX_S;
-      32'b0010100xxxxxxxxxx000xxxxx1010011: return FMIN_S;
-      32'b0010100xxxxxxxxxx001xxxxx1010011: return FMAX_S;
-      32'b110000000000xxxxxxxxxxxxx1010011: return FCVT_W_S;
-      32'b110000000001xxxxxxxxxxxxx1010011: return FCVT_WU_S;
-      32'b111000000000xxxxx000xxxxx1010011: return FMV_X_W;
-      32'b1010000xxxxxxxxxx010xxxxx1010011: return FEQ_S;
-      32'b1010000xxxxxxxxxx001xxxxx1010011: return FLT_S;
-      32'b1010000xxxxxxxxxx000xxxxx1010011: return FLE_S;
-      32'b111000000000xxxxx001xxxxx1010011: return FCLASS_S;
-      32'b110100000000xxxxxxxxxxxxx1010011: return FCVT_S_W;
-      32'b110100000001xxxxxxxxxxxxx1010011: return FCVT_S_WU;
-      32'b111100000000xxxxx000xxxxx1010011: return FMV_W_X;
-    endcase
-  endfunction
-
 
   // Task to start the clock signal
   task static start_clock();
@@ -484,6 +311,116 @@ module rv32imf_tb;
     else $display("\033[1;31m************** TEST FAILED **************\033[0m");
   endtask
 
+  function automatic void write_instruction_covered();
+    casex (`ID_STAGE.instr)
+      32'bxxxxxxxxxxxxxxxxxxxxxxxxx0110111: $fwrite(cfp, "INSTR_COV: LUI\n");
+      32'bxxxxxxxxxxxxxxxxxxxxxxxxx0010111: $fwrite(cfp, "INSTR_COV: AUIPC\n");
+      32'bxxxxxxxxxxxxxxxxxxxxxxxxx1101111: $fwrite(cfp, "INSTR_COV: JAL\n");
+      32'bxxxxxxxxxxxxxxxxx000xxxxx1100111: $fwrite(cfp, "INSTR_COV: JALR\n");
+      32'bxxxxxxxxxxxxxxxxx000xxxxx1100011: $fwrite(cfp, "INSTR_COV: BEQ\n");
+      32'bxxxxxxxxxxxxxxxxx001xxxxx1100011: $fwrite(cfp, "INSTR_COV: BNE\n");
+      32'bxxxxxxxxxxxxxxxxx100xxxxx1100011: $fwrite(cfp, "INSTR_COV: BLT\n");
+      32'bxxxxxxxxxxxxxxxxx101xxxxx1100011: $fwrite(cfp, "INSTR_COV: BGE\n");
+      32'bxxxxxxxxxxxxxxxxx110xxxxx1100011: $fwrite(cfp, "INSTR_COV: BLTU\n");
+      32'bxxxxxxxxxxxxxxxxx111xxxxx1100011: $fwrite(cfp, "INSTR_COV: BGEU\n");
+      32'bxxxxxxxxxxxxxxxxx000xxxxx0000011: $fwrite(cfp, "INSTR_COV: LB\n");
+      32'bxxxxxxxxxxxxxxxxx001xxxxx0000011: $fwrite(cfp, "INSTR_COV: LH\n");
+      32'bxxxxxxxxxxxxxxxxx010xxxxx0000011: $fwrite(cfp, "INSTR_COV: LW\n");
+      32'bxxxxxxxxxxxxxxxxx100xxxxx0000011: $fwrite(cfp, "INSTR_COV: LBU\n");
+      32'bxxxxxxxxxxxxxxxxx101xxxxx0000011: $fwrite(cfp, "INSTR_COV: LHU\n");
+      32'bxxxxxxxxxxxxxxxxx000xxxxx0100011: $fwrite(cfp, "INSTR_COV: SB\n");
+      32'bxxxxxxxxxxxxxxxxx001xxxxx0100011: $fwrite(cfp, "INSTR_COV: SH\n");
+      32'bxxxxxxxxxxxxxxxxx010xxxxx0100011: $fwrite(cfp, "INSTR_COV: SW\n");
+      32'bxxxxxxxxxxxxxxxxx000xxxxx0010011: $fwrite(cfp, "INSTR_COV: ADDI\n");
+      32'bxxxxxxxxxxxxxxxxx010xxxxx0010011: $fwrite(cfp, "INSTR_COV: SLTI\n");
+      32'bxxxxxxxxxxxxxxxxx011xxxxx0010011: $fwrite(cfp, "INSTR_COV: SLTIU\n");
+      32'bxxxxxxxxxxxxxxxxx100xxxxx0010011: $fwrite(cfp, "INSTR_COV: XORI\n");
+      32'bxxxxxxxxxxxxxxxxx110xxxxx0010011: $fwrite(cfp, "INSTR_COV: ORI\n");
+      32'bxxxxxxxxxxxxxxxxx111xxxxx0010011: $fwrite(cfp, "INSTR_COV: ANDI\n");
+      32'b0000000xxxxxxxxxx001xxxxx0010011: $fwrite(cfp, "INSTR_COV: SLLI\n");
+      32'b0000000xxxxxxxxxx101xxxxx0010011: $fwrite(cfp, "INSTR_COV: SRLI\n");
+      32'b0100000xxxxxxxxxx101xxxxx0010011: $fwrite(cfp, "INSTR_COV: SRAI\n");
+      32'b0000000xxxxxxxxxx000xxxxx0110011: $fwrite(cfp, "INSTR_COV: ADD\n");
+      32'b0100000xxxxxxxxxx000xxxxx0110011: $fwrite(cfp, "INSTR_COV: SUB\n");
+      32'b0000000xxxxxxxxxx001xxxxx0110011: $fwrite(cfp, "INSTR_COV: SLL\n");
+      32'b0000000xxxxxxxxxx010xxxxx0110011: $fwrite(cfp, "INSTR_COV: SLT\n");
+      32'b0000000xxxxxxxxxx011xxxxx0110011: $fwrite(cfp, "INSTR_COV: SLTU\n");
+      32'b0000000xxxxxxxxxx100xxxxx0110011: $fwrite(cfp, "INSTR_COV: XOR\n");
+      32'b0000000xxxxxxxxxx101xxxxx0110011: $fwrite(cfp, "INSTR_COV: SRL\n");
+      32'b0100000xxxxxxxxxx101xxxxx0110011: $fwrite(cfp, "INSTR_COV: SRA\n");
+      32'b0000000xxxxxxxxxx110xxxxx0110011: $fwrite(cfp, "INSTR_COV: OR\n");
+      32'b0000000xxxxxxxxxx111xxxxx0110011: $fwrite(cfp, "INSTR_COV: AND\n");
+      32'bxxxxxxxxxxxxxxxxx000xxxxx0001111: $fwrite(cfp, "INSTR_COV: FENCE\n");
+      32'b00000000000000000000000001110011: $fwrite(cfp, "INSTR_COV: ECALL\n");
+      32'b00000000000100000000000001110011: $fwrite(cfp, "INSTR_COV: EBREAK\n");
+      32'bxxxxxxxxxxxxxxxxx001xxxxx1110011: $fwrite(cfp, "INSTR_COV: CSRRW\n");
+      32'bxxxxxxxxxxxxxxxxx010xxxxx1110011: $fwrite(cfp, "INSTR_COV: CSRRS\n");
+      32'bxxxxxxxxxxxxxxxxx011xxxxx1110011: $fwrite(cfp, "INSTR_COV: CSRRC\n");
+      32'bxxxxxxxxxxxxxxxxx101xxxxx1110011: $fwrite(cfp, "INSTR_COV: CSRRWI\n");
+      32'bxxxxxxxxxxxxxxxxx110xxxxx1110011: $fwrite(cfp, "INSTR_COV: CSRRSI\n");
+      32'bxxxxxxxxxxxxxxxxx111xxxxx1110011: $fwrite(cfp, "INSTR_COV: CSRRCI\n");
+      32'b0000001xxxxxxxxxx000xxxxx0110011: $fwrite(cfp, "INSTR_COV: MUL\n");
+      32'b0000001xxxxxxxxxx001xxxxx0110011: $fwrite(cfp, "INSTR_COV: MULH\n");
+      32'b0000001xxxxxxxxxx010xxxxx0110011: $fwrite(cfp, "INSTR_COV: MULHSU\n");
+      32'b0000001xxxxxxxxxx011xxxxx0110011: $fwrite(cfp, "INSTR_COV: MULHU\n");
+      32'b0000001xxxxxxxxxx100xxxxx0110011: $fwrite(cfp, "INSTR_COV: DIV\n");
+      32'b0000001xxxxxxxxxx101xxxxx0110011: $fwrite(cfp, "INSTR_COV: DIVU\n");
+      32'b0000001xxxxxxxxxx110xxxxx0110011: $fwrite(cfp, "INSTR_COV: REM\n");
+      32'b0000001xxxxxxxxxx111xxxxx0110011: $fwrite(cfp, "INSTR_COV: REMU\n");
+      32'bxxxxxxxxxxxxxxxxx010xxxxx0000111: $fwrite(cfp, "INSTR_COV: FLW\n");
+      32'bxxxxxxxxxxxxxxxxx010xxxxx0100111: $fwrite(cfp, "INSTR_COV: FSW\n");
+      32'bxxxxx00xxxxxxxxxxxxxxxxxx1000011: $fwrite(cfp, "INSTR_COV: FMADD_S\n");
+      32'bxxxxx00xxxxxxxxxxxxxxxxxx1000111: $fwrite(cfp, "INSTR_COV: FMSUB_S\n");
+      32'bxxxxx00xxxxxxxxxxxxxxxxxx1001011: $fwrite(cfp, "INSTR_COV: FNMSUB_S\n");
+      32'bxxxxx00xxxxxxxxxxxxxxxxxx1001111: $fwrite(cfp, "INSTR_COV: FNMADD_S\n");
+      32'b0000000xxxxxxxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FADD_S\n");
+      32'b0000100xxxxxxxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FSUB_S\n");
+      32'b0001000xxxxxxxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FMUL_S\n");
+      32'b0001100xxxxxxxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FDIV_S\n");
+      32'b010110000000xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FSQRT_S\n");
+      32'b0010000xxxxxxxxxx000xxxxx1010011: $fwrite(cfp, "INSTR_COV: FSGNJ_S\n");
+      32'b0010000xxxxxxxxxx001xxxxx1010011: $fwrite(cfp, "INSTR_COV: FSGNJN_S\n");
+      32'b0010000xxxxxxxxxx010xxxxx1010011: $fwrite(cfp, "INSTR_COV: FSGNJX_S\n");
+      32'b0010100xxxxxxxxxx000xxxxx1010011: $fwrite(cfp, "INSTR_COV: FMIN_S\n");
+      32'b0010100xxxxxxxxxx001xxxxx1010011: $fwrite(cfp, "INSTR_COV: FMAX_S\n");
+      32'b110000000000xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FCVT_W_S\n");
+      32'b110000000001xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FCVT_WU_S\n");
+      32'b111000000000xxxxx000xxxxx1010011: $fwrite(cfp, "INSTR_COV: FMV_X_W\n");
+      32'b1010000xxxxxxxxxx010xxxxx1010011: $fwrite(cfp, "INSTR_COV: FEQ_S\n");
+      32'b1010000xxxxxxxxxx001xxxxx1010011: $fwrite(cfp, "INSTR_COV: FLT_S\n");
+      32'b1010000xxxxxxxxxx000xxxxx1010011: $fwrite(cfp, "INSTR_COV: FLE_S\n");
+      32'b111000000000xxxxx001xxxxx1010011: $fwrite(cfp, "INSTR_COV: FCLASS_S\n");
+      32'b110100000000xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FCVT_S_W\n");
+      32'b110100000001xxxxxxxxxxxxx1010011: $fwrite(cfp, "INSTR_COV: FCVT_S_WU\n");
+      32'b111100000000xxxxx000xxxxx1010011: $fwrite(cfp, "INSTR_COV: FMV_W_X\n");
+      default:                              $fwrite(cfp, "INSTR_COV: UNKNOWN 0x%08x\n", `ID_STAGE.instr);
+    endcase
+  endfunction
+
+
+  task static log_coverage();
+    int running_pc;
+    running_pc = 0;
+    fork
+      forever begin // instruction coverage
+        fork
+          @(negedge `IF_STAGE.clk);
+          @(negedge `ID_STAGE.clk);
+        join_any
+        if (`IF_STAGE.rst_n && `IF_STAGE.branch_req) begin
+          running_pc = `IF_STAGE.branch_addr_n;
+          while (`ID_STAGE.pc_id_i != running_pc) begin
+            @(negedge `IF_STAGE.clk);
+          end
+          write_instruction_covered();
+        end else if (`ID_STAGE.rst_n && `ID_STAGE.pc_id_i != running_pc) begin
+          running_pc = `ID_STAGE.pc_id_i;
+          write_instruction_covered();
+        end
+      end
+    join_none
+  endtask
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
   // Interrupt Generation
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -520,6 +457,12 @@ module rv32imf_tb;
       // Dump trace
       dump_trace();
     end
+    
+    // Set the coverage file name
+    cfp = $fopen("prog.cov", "w");
+    if (cfp == 0) begin
+      $fatal(1, "Error: Could not open file prog.cov");
+    end
 
     // Load simulation memory and symbols
     load_memory("prog.hex");
@@ -534,6 +477,9 @@ module rv32imf_tb;
 
     // Monitor STDOUT prints
     monitor_prints();
+
+    // Log Coverage
+    log_coverage();
 
     // Apply reset and start clock
     apply_reset();
