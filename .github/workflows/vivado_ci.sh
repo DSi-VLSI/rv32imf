@@ -33,7 +33,6 @@ done
 sort build/ci_coveage.log | uniq > build/temp_file && mv build/temp_file build/ci_coveage.log
 
 clear
-clear
 echo -e "\033[1;36m TEST RESULTS \033[0m"
 
 echo ""
