@@ -207,7 +207,7 @@ module rv32imf_tb;
             $sformat(txt, "%s DATA:0x%08h", txt, data_wdata);
           end
           dmem_p1_mbx.put(txt);
-        end 
+        end
       end
       forever begin
         @(posedge clk);
@@ -216,7 +216,7 @@ module rv32imf_tb;
           txt = "";
           $sformat(txt, "RDATA:0x%08h", data_rdata);
           dmem_p2_mbx.put(txt);
-        end 
+        end
       end
       forever begin
         string p1;
