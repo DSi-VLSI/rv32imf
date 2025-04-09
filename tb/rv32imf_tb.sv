@@ -47,12 +47,6 @@ module rv32imf_tb;
   logic        irq_ack;
   logic [ 4:0] irq_id;
 
-  bit [63:0] time_i;
-
-  always #100ns begin
-    time_i <= time_i + 1;
-  end
-
   // Instantiate the DUT
   rv32imf u_rv32imf (
       .clk_i              (clk),
@@ -76,8 +70,7 @@ module rv32imf_tb;
       .data_rdata_i       (data_rdata),
       .irq_i              (irq),
       .irq_ack_o          (irq_ack),
-      .irq_id_o           (irq_id),
-      .time_i             (time_i)
+      .irq_id_o           (irq_id)
   );
 
   //////////////////////////////////////////////////////////////////////////////////////////////////

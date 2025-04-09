@@ -77,9 +77,7 @@ module rv32imf_core #(
     // Interrupt acknowledge output.
     output logic        irq_ack_o,
     // Interrupt ID output.
-    output logic [ 4:0] irq_id_o,
-
-    input logic [63:0] time_i  // Time input for cycle counting
+    output logic [ 4:0] irq_id_o
 );
 
   // Import the package definition.
@@ -1446,8 +1444,7 @@ module rv32imf_core #(
       // APU dependency input.
       .apu_dep_i               (perf_apu_dep),
       // APU writeback input.
-      .apu_wb_i                (perf_apu_wb),
-      .time_i                  (time_i)
+      .apu_wb_i                (perf_apu_wb)
   );
 
 

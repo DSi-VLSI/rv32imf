@@ -90,9 +90,7 @@ module rv32imf_cs_registers
     input logic apu_typeconflict_i,        // APU type conflict event
     input logic apu_contention_i,          // APU contention event
     input logic apu_dep_i,                 // APU dependency event
-    input logic apu_wb_i,                  // APU writeback event
-
-    input logic [63:0] time_i  // Time input for cycle counting
+    input logic apu_wb_i                   // APU writeback event
 );
 
   // Number of hardware performance monitor events
@@ -234,9 +232,6 @@ module rv32imf_cs_registers
 
   always_comb begin  // Logic for reading CSR registers
     case (csr_addr_i)
-
-      CSR_TIME, CSR_MTIME: csr_rdata_int = time_i[31:0];  // Read TIME or MTIME
-      CSR_TIMEH, CSR_MTIMEH: csr_rdata_int = time_i[63:32];  // Read TIMEH or MTIMEH
 
       CSR_FFLAGS: csr_rdata_int = {27'b0, fflags_q};  // Read FFLAGS
       CSR_FRM: csr_rdata_int = {29'b0, frm_q};  // Read FRM

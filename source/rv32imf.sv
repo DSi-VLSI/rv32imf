@@ -25,9 +25,7 @@ module rv32imf #(
 
     input  logic [31:0] irq_i,      // Interrupt request input
     output logic        irq_ack_o,  // Interrupt acknowledge output
-    output logic [ 4:0] irq_id_o,   // Interrupt ID output
-
-    input  logic [63:0] time_i       // Time input
+    output logic [ 4:0] irq_id_o    // Interrupt ID output
 );
 
   logic              apu_busy;  // APU busy signal
@@ -80,8 +78,7 @@ module rv32imf #(
 
       .irq_i    (irq_i),      // Connect interrupt request input
       .irq_ack_o(irq_ack_o),  // Connect interrupt acknowledge output
-      .irq_id_o (irq_id_o),   // Connect interrupt ID output
-      .time_i   (time_i)      // Connect time input
+      .irq_id_o (irq_id_o)    // Connect interrupt ID output
   );
 
   assign apu_clk_en = apu_req | apu_busy;  // Enable APU clock when requested or busy
